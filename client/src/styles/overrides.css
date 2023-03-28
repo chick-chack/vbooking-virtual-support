@@ -1,0 +1,231 @@
+.ant-btn-primary {
+  border: none !important;
+}
+
+.ant-input {
+  padding: 9px 11px !important;
+}
+
+.ant-input-affix-wrapper {
+  box-shadow: none;
+  padding-inline: 10px;
+}
+
+.ant-btn[disabled],
+.ant-btn[disabled]:hover,
+.ant-btn[disabled]:focus,
+.ant-btn[disabled]:active {
+  color: rgba(0, 0, 0, 0.25) !important;
+  border-color: #a5a2991a !important;
+  background: #a5a2991a !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.ant-input:focus,
+.ant-input-focused {
+  box-shadow: none !important;
+  border-width: 1px;
+}
+
+/* popover */
+.ant-popover .ant-popover-arrow::before {
+  background: transparent !important;
+}
+
+.ant-popover .ant-popover-arrow::after {
+  background: #fff !important;
+}
+
+.ant-tooltip .ant-tooltip-arrow::before {
+  background: transparent !important;
+}
+
+.ant-tooltip .ant-tooltip-arrow::after {
+  background: #000 !important;
+}
+
+.ant-layout-header {
+  height: fit-content !important;
+  padding-inline: 0px !important;
+}
+
+.ant-tabs {
+  height: 100% !important;
+  width: fit-content;
+}
+
+.ant-tabs-tab {
+  padding: 0 !important;
+}
+
+.ant-tabs-nav {
+  height: 100% !important;
+}
+
+.ant-divider-horizontal {
+  margin: 8px 0 !important;
+}
+
+.ant-divider-vertical {
+  height: 2em !important;
+  border-left-width: 2px !important;
+}
+
+.ant-form-item {
+  margin-bottom: 0 !important;
+}
+
+.ant-picker-calendar-full
+  .ant-picker-panel
+  .ant-picker-cell-selected
+  .ant-picker-calendar-date {
+  background: #e7e7e7 !important;
+}
+
+.ant-tag {
+  border-radius: 4px !important;
+  border: none !important;
+  padding: 4px 10px !important;
+  color: #000 !important;
+  font-weight: 500;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  font-weight: 500 !important;
+  background-color: #f0f0f0 !important;
+}
+
+.ant-select-item-option-content {
+  padding: 0px 6px !important;
+}
+
+.ant-picker-time-panel-column
+  > li.ant-picker-time-panel-cell-selected
+  .ant-picker-time-panel-cell-inner {
+  background: #f0f0f0 !important;
+}
+
+.ant-picker-dropdown {
+  width: 595px !important;
+}
+
+.ant-picker-panel-container .ant-picker-panel .ant-picker-content,
+.ant-picker-panel-container .ant-picker-panel table,
+.ant-picker-date-panel,
+.ant-picker-panel-container .ant-picker-panel {
+  width: 100% !important;
+}
+
+.ant-image .ant-image-mask {
+  background: transparent !important;
+  border-radius: 12px !important;
+}
+
+.ant-image-mask-info {
+  display: none !important;
+}
+
+.ant-image-preview-switch-left {
+  border-radius: 0px !important;
+  height: 100% !important;
+  top: 69px !important;
+  left: 0px !important;
+  width: 50px !important;
+}
+
+.ant-image-preview-switch-right {
+  border-radius: 0px !important;
+  height: 100% !important;
+  top: 69px !important;
+  right: 0px !important;
+  width: 50px !important;
+}
+
+.rc-virtual-list-holder {
+  scroll-behavior: auto !important;
+}
+
+.ant-switch {
+  box-shadow: none !important;
+}
+
+.ant-switch-checked:focus {
+  box-shadow: none !important;
+}
+
+.ant-form-item-label > label {
+  font-size: 1.125rem !important;
+  color: #000 !important;
+  font-weight: 500 !important;
+}
+
+.sign-in .ant-form-item-label > label {
+  font-size: 1rem !important;
+  font-weight: 300 !important;
+}
+
+.ant-input-number-group-addon {
+  font-weight: 18px !important;
+  line-height: 18px !important;
+}
+
+.ant-radio-button-wrapper:hover {
+  color: #6c6de6 !important;
+}
+
+.slick-dots li button:before {
+  display: none !important;
+}
+
+.ant-layout .ant-layout-header {
+  line-height: normal;
+}
+
+@media only screen and (max-width: 768px) {
+  .ant-picker-dropdown {
+    width: auto !important;
+  }
+}
+
+.ant-layout-content > .ant-row:first-of-type {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
+
+.ant-btn {
+  padding: 13px 11px;
+  box-shadow: none;
+  font-size: 1rem;
+}
+
+.ant-btn-primary {
+  background: linear-gradient(80deg, #960bcd 0%, #44c9ff 100%) !important;
+}
+
+.ant-btn-primary:active,
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: linear-gradient(80deg, #960bcd 0%, #44c9ff 100%) !important;
+  border: none !important;
+}
+
+.ant-rate {
+  color: #ffae17 !important;
+}
+
+.ant-rate .ant-rate-star-zero .ant-rate-star-first {
+  color: #ffae1780 !important;
+}
+
+.ant-rate .ant-rate-star-zero .ant-rate-star-second {
+  color: #ffae1780 !important;
+}
+
+.ant-picker-dropdown .ant-picker-range-arrow::after {
+  background: #fff !important;
+}
+
+.ant-picker-dropdown .ant-picker-range-arrow::before {
+  background: transparent !important;
+}

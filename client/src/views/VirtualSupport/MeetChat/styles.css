@@ -1,0 +1,49 @@
+.meet-chat {
+  width: 100%;
+  height: 100%;
+}
+
+.meet-chat-panel {
+  width: 100%;
+}
+
+.support-chat .chat-list {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+  margin: 1rem 0rem;
+  overflow-y: auto;
+  height: 74vh;
+}
+
+.support-chat .chat-list * {
+  overflow-anchor: none;
+}
+
+.support-chat .chat-message {
+  background-color: #f2f2f7;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px 15px 15px 15px;
+  margin-inline-start: 0.6rem;
+  font-size: 16px;
+  max-width: 200px;
+}
+
+.support-chat .message-input {
+  height: 50px;
+  background: transparent;
+  border-radius: 32px;
+}
+
+.support-chat .ant-input-affix-wrapper:hover,
+.support-chat .ant-input-affix-wrapper-focused {
+  border-color: #acacac !important;
+}
+
+.support-chat .ant-btn-circle {
+  min-width: 40px !important;
+}
+
+.support-chat .ant-btn {
+  height: 40px !important;
+}

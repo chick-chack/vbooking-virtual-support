@@ -1,0 +1,69 @@
+:root {
+  --prim-color: #000000;
+  --sec-color: #000000;
+  --grey-color: #a5a299b8;
+  --white-color: #fff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  outline: none;
+  scroll-behavior: smooth;
+}
+
+body[dir="rtl"] {
+  overflow-x: hidden;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="number"]::placeholder,
+input[type="password"]::placeholder {
+  font-weight: 400;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="password"] {
+  font-weight: 500;
+  background-color: transparent;
+}
+
+textarea {
+  font-weight: 500;
+}
+
+textarea::placeholder {
+  font-weight: 400;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  padding: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #b8b9bb;
+  border-radius: 16px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #76797c;
+  border-radius: 16px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

@@ -1,0 +1,16 @@
+.invite-friends {
+  position: relative;
+  padding: 2rem 0rem;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10.8px);
+  border-radius: 14px;
+  max-width: 350px;
+  margin-top: -55px;
+}
+
+.invite-friends .invite-friends-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}

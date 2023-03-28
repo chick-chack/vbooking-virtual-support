@@ -1,0 +1,61 @@
+.holo-meet {
+  padding: 1.5rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  position: relative;
+  width: fit-content;
+}
+
+.holo-meet .holo-meet-category {
+  padding: 3rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.holo-meet .back-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.holo-meet .holo-meet-room-main {
+  height: 200px;
+  width: 100%;
+  padding: 0 1rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.holo-meet .holo-meet-room {
+  width: 100%;
+}
+
+.holo-meet .holo-meet-room .holo-meet-img {
+  width: 100%;
+  min-height: 150px;
+  max-height: 200px;
+  border-radius: 16px;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+@media only screen and (max-width: 1366px) {
+  .holo-meet {
+    padding: 1rem;
+  }
+
+  .holo-meet .holo-meet-category {
+    padding: 1rem 0.5rem;
+  }
+}
+
+/* @media only screen and (max-width: 768px) {
+   
+  } */

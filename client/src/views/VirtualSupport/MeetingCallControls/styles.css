@@ -1,0 +1,112 @@
+.virtual-support-main .icon-wrapper {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.virtual-support-main .icon-wrapper:not(:last-child) {
+  margin-inline-end: 0.8rem;
+}
+
+.virtual-support-main .two-icons {
+  height: 35px;
+  padding: 0px 4px;
+  border-radius: 32px;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.virtual-support-main .end-call {
+  color: #fff;
+  width: 4rem;
+  height: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f93e3e;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.settings-options {
+  border-radius: 6px;
+  padding: 0.8rem;
+  width: 200px;
+  align-self: flex-end;
+  color: #fff;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-weight: 300;
+}
+
+.settings-options > div {
+  margin-bottom: 0.5rem;
+}
+
+.end-meet-btn {
+  background-color: #e81224 !important;
+  color: #fff !important;
+  border: none !important;
+  font-size: 14px !important;
+}
+
+.leave-meet-btn {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  color: #fff !important;
+  border: none !important;
+  font-size: 14px !important;
+}
+
+.ant-dropdown-menu {
+  margin-bottom: 0.5rem !important;
+  border-radius: 16px !important;
+}
+
+.ant-dropdown-menu-item:first-child {
+  border-radius: 16px 16px 0 0 !important;
+}
+
+.ant-dropdown-menu-item:last-child {
+  border-radius: 0 0 16px 16px !important;
+}
+
+.join-dim-btn .ant-btn {
+  height: fit-content !important;
+  padding: 8px 15px !important;
+  border-radius: 64px;
+  margin-inline-end: 4px;
+}
+
+.share-screen-options {
+  background: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.open-settings {
+  position: absolute;
+  width: 40px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px 8px 0 0;
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(10px) !important;
+  top: -20.2px;
+  left: calc(50% - 20px);
+}

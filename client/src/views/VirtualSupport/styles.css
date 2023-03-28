@@ -1,0 +1,252 @@
+.virtual-support {
+  background-color: #fff;
+  min-height: 100vh;
+  padding: 1rem;
+  width: 100%;
+}
+
+.virtual-support .virtual-support-main {
+  padding: 8px 40px;
+  background-color: #f2f2f773;
+  border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.virtual-support .virtual-support-main .meet-time {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  border-radius: 18px;
+  border: 1px solid #b6b6b6;
+  padding: 0.1rem 0.7rem;
+}
+
+.virtual-support .virtual-support-aside {
+  width: 100%;
+  height: 100%;
+  background-color: #f2f2f773;
+  padding: 15px 30px;
+  border-radius: 30px;
+}
+
+.virtual-support .main-screen-sound {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.virtual-support .main-screen-sound .item {
+  width: 40px;
+  height: 40px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.virtual-support .friend-screen-container {
+  width: 100%;
+  display: flex;
+  gap: 16px;
+  overflow: auto;
+}
+
+.virtual-support .friend-screen-sound {
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.39);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10.8px);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+}
+
+.virtual-support .main-screen-sound {
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+}
+
+.virtual-support .virtual-support-hide-sider {
+  width: 100%;
+  height: 100%;
+  background-color: #f2f2f7;
+  border-radius: 30px;
+  padding-top: 30px;
+}
+
+.virtual-support .invite-gradiant-text {
+  background: transparent linear-gradient(270deg, #960bcd 0%, #44c9ff 100%) 0%
+    0% no-repeat padding-box !important;
+  background-clip: text !important;
+  color: transparent !important;
+  font-weight: 600 !important;
+}
+
+@media only screen and (max-width: 768px) {
+  .virtual-support {
+    padding: 0rem;
+    margin: 0 !important;
+  }
+
+  .virtual-support .virtual-support-main {
+    padding: 10px;
+  }
+}
+
+.join-meet {
+  min-height: 100vh;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: center !important;
+  overflow-x: hidden !important;
+}
+
+.join-meet .blur {
+  background: rgba(0, 0, 0, 0.21);
+  backdrop-filter: blur(15px);
+  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.join-meet .join-meet-main {
+  padding: 20px 40px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(17px);
+  max-width: 500px;
+  width: 100%;
+}
+
+.join-meet .icon-wrapper {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.join-meet .join-meet-form label {
+  color: #fff !important;
+}
+
+.join-meet .join-meet-form .ant-form-item:not(:first-of-type) {
+  margin-top: 1rem !important;
+}
+
+.join-meet .ant-select-single .ant-select-selector {
+  color: #fff !important;
+}
+
+.join-meet .join-meet-img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.join-meet .settings-select {
+  max-height: 180px;
+  padding: 0 1rem;
+  overflow: auto;
+}
+
+.join-meet .device-settings {
+  display: flex;
+  align-items: center;
+  column-gap: 6px;
+  padding: 0 1rem;
+}
+
+.holomeet-modal {
+  width: fit-content !important;
+}
+
+.holomeet-modal .ant-modal-content {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 50px;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.join-meet .settings-close {
+  animation: fadeOut 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-2rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.join-meet .settings-select {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@media only screen and (max-width: 1366px) {
+  .join-meet .join-meet-img {
+    width: 100px;
+    height: 100px;
+  }
+  .join-meet .join-meet-main {
+    padding: 1rem;
+    max-width: 400px;
+  }
+  .join-meet .join-meet-btn {
+    height: 35px !important;
+    padding: 0px 16px;
+  }
+
+  .virtual-support .virtual-support-aside {
+    padding: 15px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .join-meet .join-meet-main {
+    padding: 1rem;
+  }
+}
+
+@media only screen and (max-width: 1200px) {
+  .virtual-support .virtual-support-hide-sider {
+    height: fit-content;
+    padding: 10px 0;
+  }
+}

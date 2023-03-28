@@ -1,0 +1,177 @@
+.booking-experience {
+  position: relative;
+  width: 100vw;
+  background-color: #fff;
+}
+
+.booking-experience .booking-experience-container {
+  display: flex;
+  align-items: center;
+  min-height: 700px;
+}
+
+.booking-experience .vbooking-image {
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.booking-experience .top-lines-image {
+  position: absolute;
+  top: -200px;
+  left: -100px;
+}
+
+.booking-experience .bottom-lines-image {
+  position: absolute;
+  bottom: -250px;
+  left: -80px;
+}
+
+.booking-experience .explore-image {
+  clip-path: ellipse(40% 60% at 70% 39%);
+  min-height: 700px;
+  position: absolute;
+  right: -10%;
+  top: 0%;
+}
+
+.booking-experience .explore-image img {
+  min-height: 800px;
+}
+
+.booking-experience .booking-experience-tab {
+  border-radius: 20px;
+  background-color: #f5f7f9;
+  padding: 6px;
+  width: 100px;
+  height: 40px;
+}
+
+.booking-experience .booking-experience-tab:hover {
+  background-color: #d1d1d1;
+}
+
+.booking-experience .booking-experience-tab-icon {
+  background: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.booking-experience .booking-experience-tab-icon.active {
+  background: linear-gradient(270deg, #960bcd 0%, #44c9ff 100%);
+}
+
+.booking-experience .booking-experience-tab-icon.active svg path {
+  fill: #fff;
+}
+
+.booking-experience .tab-content {
+  position: relative;
+  padding: 20px;
+  background-color: #f5f7f9;
+  border-radius: 12px;
+  width: 100%;
+}
+
+.booking-experience .tab-content .tab-content-animation {
+  animation-name: contentfade;
+  animation-duration: 1s;
+}
+
+.booking-experience .tab-content .tab-content-arrow {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid #f5f7f9;
+  transition: all 0.5s ease-in-out;
+}
+
+@keyframes contentfade {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.guest-dropdown {
+  background-color: #fff;
+  padding: 10px 16px;
+  border-radius: 0px 0px 28px 28px;
+  width: fit-content;
+  width: 100%;
+  margin-left: auto;
+}
+
+.cart-add-btn {
+  min-width: 30px !important;
+  height: 30px !important;
+  background: #eee !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+.cart-quantity-input {
+  border: none !important;
+  width: 50px !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.hotels-cards-display .ant-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.select-prefix-icon .ant-select-selection-placeholder {
+  padding-inline-start: 24px !important;
+  padding-inline-end: 0px !important;
+}
+
+.select-prefix-icon .ant-select-arrow {
+  inset-inline-start: 11px !important;
+  inset-inline-end: unset !important;
+}
+
+.select-prefix-icon .ant-select-selection-search {
+  inset-inline-start: 34px !important;
+}
+
+.select-prefix-icon .ant-select-selection-item {
+  margin-inline-start: 24px !important;
+}
+
+@media only screen and (max-width: 1000px) {
+  .booking-experience .explore-image {
+    display: none;
+  }
+
+  .booking-experience .top-lines-image {
+    display: none;
+  }
+
+  .booking-experience .bottom-lines-image {
+    display: none;
+  }
+
+  .booking-experience .booking-experience-container {
+    padding-top: 2rem;
+  }
+
+  .booking-experience .vbooking-image {
+    margin-bottom: 0rem;
+    padding: 1rem 1rem 0rem;
+  }
+}

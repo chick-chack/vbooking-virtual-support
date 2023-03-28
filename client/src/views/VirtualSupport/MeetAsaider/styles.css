@@ -1,0 +1,24 @@
+.meet-asider-btns {
+  border: none;
+  padding: 10px 0px;
+  transition: all 0.4s ease-in;
+  cursor: pointer;
+  background: transparent;
+}
+
+.meet-asider-btns-active {
+  padding: 10px 30px;
+  background-color: #fff;
+  outline: none;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.side-bar-tabs {
+  overflow-x: auto;
+}
+
+.side-bar-tabs > .ant-col:not(:last-child) {
+  margin-inline-end: 40px;
+}
