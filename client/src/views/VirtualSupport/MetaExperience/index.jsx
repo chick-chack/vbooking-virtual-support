@@ -1,15 +1,25 @@
+import { useEffect, useState, useContext } from "react";
 import { LoadingOutlined } from "@ant-design/icons";
-import { Col, Image, Row, Typography } from "antd";
+import { Button, Col, Row, Typography } from "antd";
+
 import { ArrowRightSVG } from "assets/jsx-svg";
-import { useEffect } from "react";
-import { useState } from "react";
 import MetaverseService from "services/metaverse.service";
 import { axiosCatch } from "utils/axiosUtils";
+import DragContext from "../DragContext";
 import "./styles.css";
 
-export default function MetaExperience({ setActiveBtn, SystemMessage }) {
+export default function MetaExperience({
+  setActiveBtn,
+  SystemMessage,
+  sharingDimId,
+  sharingScreen,
+  unPublishScreen,
+  sharingFile,
+  sharingWhiteboard,
+}) {
   const [myDims, setMyDims] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { setDragData } = useContext(DragContext);
 
   useEffect(() => {
     (async () => {
@@ -57,7 +67,7 @@ export default function MetaExperience({ setActiveBtn, SystemMessage }) {
           <LoadingOutlined />
         </Row>
       ) : (
-        <Row gutter={[0, 10]}>
+        <Row gutter={[0, 10]} style={{ marginTop: "2rem" }}>
           <Col xs={24}>
             <Typography.Paragraph
               ellipsis={{ rows: 3 }}
@@ -67,25 +77,75 @@ export default function MetaExperience({ setActiveBtn, SystemMessage }) {
             </Typography.Paragraph>
           </Col>
 
-          {myDims.map((dim) => (
-            <Col xs={24} key={dim.id}>
-              <div
-                className="dim-card"
-                onClick={() => SystemMessage.shareDim(dim.id)}
+          <Row
+            style={{ maxHeight: "76vh", overflowY: "auto", width: "100%" }}
+            gutter={[0, 12]}
+          >
+            {myDims.map((dim) => (
+              <Col
+                draggable
+                xs={24}
+                key={dim.id}
+                onDragStart={() =>
+                  setDragData({
+                    dragging: true,
+                    dropText: "Drop to share dimension",
+                    dimId: dim.id,
+                    file: null,
+                  })
+                }
+                onDragEnd={() =>
+                  setDragData({
+                    dragging: false,
+                    dropText: "",
+                    dimId: null,
+                    file: null,
+                  })
+                }
               >
                 <div
-                  style={{ background: `url(${dim.image})` }}
-                  className="dim-card-img"
-                />
+                  className="dim-card"
+                  onClick={() => {
+                    if (sharingScreen) {
+                      unPublishScreen();
+                    } else if (sharingWhiteboard) {
+                      SystemMessage.stopWhiteboard();
+                    } else if (sharingFile) {
+                      SystemMessage.stopFilePreview();
+                    }
 
-                <div className="dim-card-text">
-                  <Typography className="wc">
-                    {dim.customerDimensionTranslations[0].name}
-                  </Typography>
+                    SystemMessage.shareDim(dim.id);
+                  }}
+                >
+                  <div
+                    style={{ background: `url(${dim.image})` }}
+                    className="dim-card-img"
+                  />
+
+                  <div className="dim-card-text">
+                    <Typography className="wc">
+                      {dim.customerDimensionTranslations[0].name}
+                    </Typography>
+                  </div>
+
+                  {+sharingDimId === +dim.id && (
+                    <div className="dim-card-btn">
+                      <Button
+                        type="primary"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          SystemMessage.stopDim();
+                        }}
+                      >
+                        Exit
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Col>
-          ))}
+              </Col>
+            ))}
+          </Row>
         </Row>
       )}
     </section>

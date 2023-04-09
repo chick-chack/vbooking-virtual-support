@@ -1,35 +1,36 @@
 .holo-meet {
-  padding: 1.5rem 1rem;
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 14px;
-  position: relative;
-  width: fit-content;
+  margin-top: 42px;
+  padding: 0rem 0.5rem;
+  height: 100%;
 }
 
 .holo-meet .holo-meet-category {
   padding: 3rem 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 14px;
-  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 0px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 24px;
+  max-width: 300px;
   cursor: pointer;
+  margin: auto;
+}
+
+.holo-meet .holo-meet-category:hover {
+  outline: 1px solid #aeaeb2;
 }
 
 .holo-meet .back-btn {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 32px;
+  left: 40px;
 }
 
 .holo-meet .holo-meet-room-main {
-  height: 200px;
+  max-height: 680px;
   width: 100%;
-  padding: 0 1rem;
+  padding: 0 0.2rem;
   overflow-y: auto;
   overflow-x: hidden;
+  margin-top: 2rem;
 }
 
 .holo-meet .holo-meet-room {
@@ -38,8 +39,7 @@
 
 .holo-meet .holo-meet-room .holo-meet-img {
   width: 100%;
-  min-height: 150px;
-  max-height: 200px;
+  height: 215px;
   border-radius: 16px;
   background-position: center !important;
   background-repeat: no-repeat !important;
@@ -48,14 +48,8 @@
 
 @media only screen and (max-width: 1366px) {
   .holo-meet {
-    padding: 1rem;
-  }
-
-  .holo-meet .holo-meet-category {
-    padding: 1rem 0.5rem;
+    margin-top: 0px;
+    padding: 0rem 0.5rem;
+    height: 100%;
   }
 }
-
-/* @media only screen and (max-width: 768px) {
-   
-  } */

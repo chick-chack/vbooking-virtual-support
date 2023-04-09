@@ -89,12 +89,12 @@ export default function BookingExperience({ header, description, search }) {
     setRoomNo(0);
   }, [activeTab]);
 
-  useEffect(() => {
-    (async () => {
-      const res = await HotelsService.getCountryList();
-      setCountriesData(res.data.data);
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     const res = await HotelsService.getCountryList();
+  //     setCountriesData(res.data.data);
+  //   })();
+  // }, []);
 
   return (
     <main style={{ overflowX: "hidden", height: "100vh", background: "#fff" }}>

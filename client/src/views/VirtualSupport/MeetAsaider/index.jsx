@@ -1,21 +1,22 @@
-import { useMemo, useState } from "react";
-import { Col, Image, Input, Row, Typography } from "antd";
-import {
-  ArrowRightSVG,
-  PackageSVG,
-  ParticipantsSVG,
-  SearchSVG,
-  ShoppingCartSVG,
-  SMSSVG,
-} from "assets/jsx-svg";
+import { useEffect, useMemo, useState } from "react";
+import { Typography, Col, Input, Row, Button, Image } from "antd";
+import { EyeInvisibleFilled } from "@ant-design/icons";
 
-import hologram from "assets/images/3d-hologram.png";
 import MeetingCallParticipants from "../MeetingCallParticipants";
 import InventorySection from "../InventorySection";
 import ProductSection from "../ProductSection";
 import MeetChat from "../MeetChat";
 import MyCart from "../MyCart";
+import ShareTools from "../ShareTools";
 import MetaExperience from "../MetaExperience";
+import Holomeet from "../Holomeet";
+import FilesSharing from "../FilesSharing";
+import SharedFiles from "../SharedFiles";
+import YoutubeLink from "../YoutubeLink";
+
+import { GroupsSVG, LeftArrowSVG, SearchSVG } from "assets/jsx-svg";
+import AvatarMain from "assets/images/AvatarMain.png";
+
 import "./styles.css";
 
 export default function MeetAsaider({
@@ -24,11 +25,25 @@ export default function MeetAsaider({
   messages,
   sendMessage,
   participants,
-  setHideSider,
-  activeBtn,
   setActiveBtn,
-  setHoloModalOpen,
+  activeBtn,
   SystemMessage,
+  shareWhiteboard,
+  permissions,
+  sharedDimId,
+  sharingDimId,
+  sharedFiles,
+  setSharedFiles,
+  sharingScreen,
+  unPublishScreen,
+  publishScreen,
+  sharingDim,
+  sharingFile,
+  sharingWhiteboard,
+  setHideSide,
+  joinedSharedDim,
+  setJoinedSharedDim,
+  fastboard,
 }) {
   const [productSelected, setProductSelected] = useState(null);
   const [searchValue, setSearchValue] = useState("");
@@ -49,195 +64,61 @@ export default function MeetAsaider({
     }
   };
 
+  useEffect(() => {
+    if (!!sharedDimId) {
+      setActiveBtn("sharingDim");
+    }
+  }, [setActiveBtn, sharedDimId]);
+
   return (
-    <aside>
+    <aside className="h-100">
+      <div className="hide-sider clickable" onClick={() => setHideSide(true)}>
+        <EyeInvisibleFilled style={{ color: "#8E8E93" }} />
+        <Typography.Text className="fw-500 gc">Hide Panel</Typography.Text>
+      </div>
       {!productSelected ? (
         <>
-          <Row justify="end" className="mb-1">
-            <Col
-              className="clickable"
-              onClick={() => setHideSider((prev) => !prev)}
-            >
-              <Row align="middle" gutter={[6, 0]} wrap={false}>
-                <Col>
-                  <Typography.Text style={{ color: "#6C6DE6" }}>
-                    Hide
-                  </Typography.Text>
-                </Col>
-                <Col>
-                  <Row align="middle">
-                    <ArrowRightSVG color="#6C6DE6" />
-                  </Row>
-                </Col>
-              </Row>
-            </Col>
-          </Row>
-          {activeBtn === "metaExperience" ? (
+          {activeBtn === "metaExperience" && (
             <MetaExperience
               SystemMessage={SystemMessage}
               setActiveBtn={setActiveBtn}
+              sharingDimId={sharingDimId}
+              sharingScreen={sharingScreen}
+              unPublishScreen={unPublishScreen}
+              sharingFile={sharingFile}
+              sharingWhiteboard={sharingWhiteboard}
             />
-          ) : (
-            <Row
-              gutter={[0, 0]}
-              wrap={false}
-              style={{ overflowX: "auto" }}
-              align="middle"
-              justify="space-between"
-              className="side-bar-tabs"
-            >
-              <Col>
-                <button
-                  className={`meet-asider-btns${
-                    activeBtn === "participant" ? "-active" : ""
-                  }`}
-                  onClick={() => setActiveBtn("participant")}
-                >
-                  <Row
-                    justify="center"
-                    align="middle"
-                    wrap={false}
-                    gutter={[14, 0]}
-                  >
-                    <Col>
-                      <Row align="middle">
-                        <ParticipantsSVG
-                          style={{ width: "20px", height: "20px" }}
-                          color={activeBtn === "participant" ? "#6C6DE6" : ""}
-                        />
-                      </Row>
-                    </Col>
-                    {activeBtn === "participant" && (
-                      <Col>
-                        <Typography.Text ellipsis className="fw-500">
-                          Participant
-                        </Typography.Text>
-                      </Col>
-                    )}
-                  </Row>
-                </button>
-              </Col>
-
-              {isHost ? (
-                <Col>
-                  <button
-                    className={`meet-asider-btns${
-                      activeBtn === "inventory" ? "-active" : ""
-                    }`}
-                    onClick={() => setActiveBtn("inventory")}
-                  >
-                    <Row
-                      justify="center"
-                      align="middle"
-                      wrap={false}
-                      gutter={[14, 0]}
-                    >
-                      <Col>
-                        <Row align="middle">
-                          <PackageSVG
-                            style={{ width: "20px", height: "20px" }}
-                            color={activeBtn === "inventory" ? "#6C6DE6" : ""}
-                          />
-                        </Row>
-                      </Col>
-                      {activeBtn === "inventory" && (
-                        <Col>
-                          <Typography.Text ellipsis className="fw-500">
-                            Inventory
-                          </Typography.Text>
-                        </Col>
-                      )}
-                    </Row>
-                  </button>
-                </Col>
-              ) : (
-                <Col>
-                  <button
-                    className={`meet-asider-btns${
-                      activeBtn === "myCart" ? "-active" : ""
-                    }`}
-                    onClick={() => setActiveBtn("myCart")}
-                  >
-                    <Row
-                      justify="center"
-                      align="middle"
-                      wrap={false}
-                      gutter={[14, 0]}
-                    >
-                      <Col>
-                        <Row align="middle">
-                          <ShoppingCartSVG
-                            style={{ width: "20px", height: "20px" }}
-                            color={
-                              activeBtn === "myCart" ? "#6C6DE6" : "#8e8e93"
-                            }
-                          />
-                        </Row>
-                      </Col>
-                      {activeBtn === "myCart" && (
-                        <Col>
-                          <Typography.Text ellipsis className="fw-500">
-                            My Cart
-                          </Typography.Text>
-                        </Col>
-                      )}
-                    </Row>
-                  </button>
-                </Col>
-              )}
-
-              <Col>
-                <button
-                  className={`meet-asider-btns${
-                    activeBtn === "chat" ? "-active" : ""
-                  }`}
-                  onClick={() => setActiveBtn("chat")}
-                >
-                  <Row
-                    justify="center"
-                    align="middle"
-                    wrap={false}
-                    gutter={[14, 0]}
-                  >
-                    <Col>
-                      <Row align="middle">
-                        <SMSSVG
-                          style={{ width: "20px", height: "20px" }}
-                          color={activeBtn === "chat" ? "#6C6DE6" : ""}
-                        />
-                      </Row>
-                    </Col>
-                    {activeBtn === "chat" && (
-                      <Col>
-                        <Typography.Text ellipsis className="fw-500">
-                          Chat
-                        </Typography.Text>
-                      </Col>
-                    )}
-                  </Row>
-                </button>
-              </Col>
-
-              <Col>
-                <Image
-                  className="clickable"
-                  preview={false}
-                  width={20}
-                  height={20}
-                  src={hologram}
-                  onClick={() => {
-                    setHoloModalOpen((prev) => !prev);
-                    setHideSider(true);
-                  }}
-                />
-              </Col>
-            </Row>
           )}
 
           {activeBtn === "myCart" && <MyCart />}
 
+          {activeBtn === "youtubeLink" && (
+            <YoutubeLink setActiveBtn={setActiveBtn} fastboard={fastboard} />
+          )}
+
+          {activeBtn === "tools" && (
+            <ShareTools
+              setActiveBtn={setActiveBtn}
+              shareWhiteboard={shareWhiteboard}
+              isHost={isHost}
+              permissions={permissions}
+              sharingScreen={sharingScreen}
+              unPublishScreen={unPublishScreen}
+              publishScreen={publishScreen}
+              SystemMessage={SystemMessage}
+              sharingDim={sharingDim}
+              sharingFile={sharingFile}
+              sharingWhiteboard={sharingWhiteboard}
+            />
+          )}
+
           {activeBtn === "participant" && (
-            <Row style={{ marginTop: "24px" }} gutter={[0, 14]}>
+            <Row gutter={[0, 14]}>
+              <Col xs={24}>
+                <Typography.Text className="fw-500 fz-18">
+                  Participants
+                </Typography.Text>
+              </Col>
               <Col xs={24}>
                 <Input
                   onChange={onSearch}
@@ -261,16 +142,100 @@ export default function MeetAsaider({
           )}
 
           {activeBtn === "chat" && (
-            <Row style={{ marginTop: "24px" }} gutter={[0, 14]}>
+            <Row gutter={[0, 14]} className="h-100">
               <Col xs={24}>
                 <MeetChat
                   loading={chatLoading}
                   messages={messages}
                   sendMessage={sendMessage}
                   participants={participants}
+                  isHost={isHost}
+                  permissions={permissions}
                 />
               </Col>
             </Row>
+          )}
+
+          {activeBtn === "holomeet" && <Holomeet />}
+
+          {activeBtn === "files" && (
+            <FilesSharing
+              setActiveBtn={setActiveBtn}
+              sharedFiles={sharedFiles}
+              setSharedFiles={setSharedFiles}
+            />
+          )}
+
+          {activeBtn === "sharedFiles" && (
+            <SharedFiles
+              setActiveBtn={setActiveBtn}
+              sharedFiles={sharedFiles}
+              permissions={permissions}
+            />
+          )}
+
+          {activeBtn === "sharingDim" && (
+            <>
+              <div
+                className="clickable"
+                onClick={() => setActiveBtn("participant")}
+              >
+                <Row wrap={false} gutter={[6, 0]} align="middle">
+                  <Col>
+                    <Row align="middle">
+                      <LeftArrowSVG
+                        color="#8E8E93"
+                        style={{ width: "14px", height: "14px" }}
+                      />
+                    </Row>
+                  </Col>
+                  <Col>
+                    <Typography.Text style={{ color: "#8E8E93" }}>
+                      Back
+                    </Typography.Text>
+                  </Col>
+                </Row>
+              </div>
+
+              <Row style={{ marginTop: "1rem" }}>
+                <Typography.Text className="fz-18 fw-400">
+                  You Can Join Metaverse Experience With Other Participants.
+                </Typography.Text>
+              </Row>
+              <Row
+                justify="center"
+                gutter={[0, 16]}
+                style={{ marginTop: "160px" }}
+              >
+                <Col xs={24}>
+                  <Row justify="center">
+                    <Image src={AvatarMain} preview={false} alt="Main avatar" />
+                  </Row>
+                </Col>
+                <Col className="join-dim-btn" xs={24}>
+                  <Row justify="center">
+                    <Button
+                      onClick={() => setJoinedSharedDim(!joinedSharedDim)}
+                      type="primary"
+                      style={{ borderRadius: "14px" }}
+                    >
+                      <Row gutter={[6, 0]} wrap={false} align="middle">
+                        <Col>
+                          <Row align="middle">
+                            <GroupsSVG />
+                          </Row>
+                        </Col>
+                        <Col>
+                          {joinedSharedDim
+                            ? "Leave Dimension"
+                            : "Join Dimension"}
+                        </Col>
+                      </Row>
+                    </Button>
+                  </Row>
+                </Col>
+              </Row>
+            </>
           )}
         </>
       ) : (

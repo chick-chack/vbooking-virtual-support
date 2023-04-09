@@ -1,12 +1,12 @@
 .virtual-support {
   background-color: #fff;
   min-height: 100vh;
-  padding: 1rem;
+  padding: 1rem 60px;
   width: 100%;
 }
 
 .virtual-support .virtual-support-main {
-  padding: 8px 40px;
+  padding: 8px 32px;
   background-color: #f2f2f773;
   border-radius: 30px;
   display: flex;
@@ -26,8 +26,8 @@
   width: 100%;
   height: 100%;
   background-color: #f2f2f773;
-  padding: 15px 30px;
-  border-radius: 30px;
+  padding: 32px 1rem 32px 36px;
+  border-radius: 0px 30px 30px 0px;
 }
 
 .virtual-support .main-screen-sound {
@@ -81,12 +81,43 @@
   top: 8px;
 }
 
-.virtual-support .virtual-support-hide-sider {
+.virtual-support .virtual-support-nav-sider {
   width: 100%;
+  max-width: 75px;
   height: 100%;
-  background-color: #f2f2f7;
-  border-radius: 30px;
-  padding-top: 30px;
+  background-color: #f2f2f773;
+  border-radius: 30px 0px 0px 30px;
+  padding: 30px 1rem;
+  border-right: 1px solid #fff;
+}
+
+.virtual-support .virtual-support-nav-sider > .ant-row {
+  row-gap: 80px;
+}
+
+.virtual-support .virtual-support-nav-sider-btns-wraper {
+  width: 100%;
+}
+
+.virtual-support .virtual-support-nav-sider > .ant-row,
+.virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns {
+  flex-direction: column;
+  height: 100%;
+}
+
+.virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns,
+.virtual-support
+  .virtual-support-nav-sider
+  .virtual-support-nav-sider-btns
+  > .ant-col {
+  width: 100%;
+}
+
+.virtual-support .virtual-support-avatar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex: 1;
 }
 
 .virtual-support .invite-gradiant-text {
@@ -95,17 +126,6 @@
   background-clip: text !important;
   color: transparent !important;
   font-weight: 600 !important;
-}
-
-@media only screen and (max-width: 768px) {
-  .virtual-support {
-    padding: 0rem;
-    margin: 0 !important;
-  }
-
-  .virtual-support .virtual-support-main {
-    padding: 10px;
-  }
 }
 
 .join-meet {
@@ -204,19 +224,28 @@
   animation: fadeOut 0.4s ease-in-out;
 }
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-2rem);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .join-meet .settings-select {
   animation: fadeIn 0.4s ease-in-out;
+}
+
+.virtual-support .sider-active-btn::after {
+  content: "";
+  position: absolute;
+  right: -16px;
+  width: 3px;
+  height: 100%;
+  border-radius: 8px 0 0 8px;
+  background-color: #960bcd;
+}
+
+.virtual-support .sider-active-btn svg path {
+  fill: #960bcd;
+}
+
+@media only screen and (max-width: 1700px) {
+  .virtual-support {
+    padding: 1rem;
+  }
 }
 
 @media only screen and (max-width: 1366px) {
@@ -238,15 +267,105 @@
   }
 }
 
-@media only screen and (max-width: 768px) {
-  .join-meet .join-meet-main {
-    padding: 1rem;
+@media only screen and (max-width: 1200px) {
+  .virtual-support {
+    flex-direction: column;
+  }
+  .virtual-support .virtual-support-aside-hide {
+    display: none;
+  }
+
+  .virtual-support .virtual-support-nav-sider-holder {
+    flex: 1;
+  }
+
+  .virtual-support .virtual-support-aside,
+  .virtual-support .virtual-support-nav-sider {
+    border-radius: 30px;
+  }
+
+  .virtual-support .virtual-support-nav-sider {
+    height: fit-content;
+    padding: 10px;
+    max-width: 100%;
+  }
+
+  .virtual-support .virtual-support-nav-sider > .ant-row {
+    row-gap: 0px;
+    column-gap: 20px;
+  }
+
+  .virtual-support .virtual-support-avatar {
+    flex: 0;
+  }
+
+  .virtual-support .virtual-support-nav-sider-btns-wraper {
+    width: auto;
+    height: 100%;
+    flex: 1;
+    margin: 0 10rem;
+  }
+
+  .virtual-support .virtual-support-nav-sider > .ant-row,
+  .virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns {
+    flex-direction: row;
+  }
+
+  .virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns,
+  .virtual-support
+    .virtual-support-nav-sider
+    .virtual-support-nav-sider-btns
+    > .ant-col {
+    width: auto;
+  }
+
+  .virtual-support .sider-active-btn::after {
+    bottom: -16px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 32px;
+    height: 3px;
+    border-radius: 8px 8px 0 0;
   }
 }
 
-@media only screen and (max-width: 1200px) {
-  .virtual-support .virtual-support-hide-sider {
-    height: fit-content;
-    padding: 10px 0;
+@media only screen and (max-width: 768px) {
+  .virtual-support {
+    padding: 0rem;
+    margin: 0 !important;
+  }
+
+  .virtual-support .virtual-support-main {
+    padding: 10px;
+  }
+
+  .join-meet .join-meet-main {
+    padding: 1rem;
+  }
+
+  .virtual-support .virtual-support-nav-sider {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .virtual-support .virtual-support-nav-sider-btns {
+    margin: 0;
+    flex-wrap: nowrap;
+  }
+
+  .virtual-support .virtual-support-nav-sider-btns-wraper {
+    margin: 0;
+    flex-wrap: nowrap;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-2rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

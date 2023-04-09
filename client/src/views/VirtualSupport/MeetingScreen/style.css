@@ -2,12 +2,30 @@
   border-radius: 12px;
 }
 
-.virtual-support .virtual-support-main .video-player {
+.virtual-support .virtual-support-main .video-player,
+.virtual-support .virtual-support-main .whiteboard-canvas,
+.virtual-support .virtual-support-main .file-canvas {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.virtual-support .virtual-support-main .dragover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 201;
+  font-weight: 600;
+  font-size: 30px;
+  color: #fff;
 }
 
 .virtual-support .virtual-support-main .video-player * {
@@ -17,11 +35,20 @@
 /* main screen */
 .virtual-support .virtual-support-main .main-screen {
   position: relative;
-  min-height: 70vh;
-  height: 70vh;
+  height: 62.5vh;
   background-color: #d4d4d899;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.virtual-support .virtual-support-main .main-screen-full {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 300;
+  background-color: #d4d4d8;
 }
 
 .virtual-support .virtual-support-main .main-screen-controls {
@@ -32,6 +59,7 @@
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease-in-out;
+  z-index: 200;
 }
 
 .virtual-support .virtual-support-main .close-fullscreen {
@@ -46,7 +74,7 @@
   position: relative;
   min-width: 240px !important;
   max-width: 240px !important;
-  height: 18vh;
+  height: 19vh;
   background: #d4d4d899;
   border-radius: 12px;
   margin-bottom: 1rem;
@@ -67,4 +95,36 @@
   transform: translate(-50%, -50%);
   top: 50%;
   left: 50%;
+}
+
+.virtual-support .virtual-support-main .whiteboard-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  z-index: 2;
+}
+
+.virtual-support .virtual-support-main .whiteboard-top {
+  position: absolute;
+  top: 10px;
+  width: 100%;
+  padding-inline: 10px;
+  z-index: 1;
+}
+
+.virtual-support .virtual-support-main .pdf-canvas {
+  display: flex;
+  justify-content: center;
+}
+
+@media only screen and (max-width: 768px) {
+  .virtual-support .virtual-support-main .main-screen-controls {
+    bottom: 6px !important;
+  }
 }

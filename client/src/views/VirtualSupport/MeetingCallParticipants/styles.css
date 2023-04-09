@@ -1,5 +1,5 @@
 .participant-status svg:not(:last-child) {
-  margin-inline-end: 0.6rem;
+  margin-inline-end: 1rem;
 }
 
 .support-participants {

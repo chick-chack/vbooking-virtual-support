@@ -1,6 +1,6 @@
 .meta-experience .back-word {
   position: absolute;
-  top: 16px;
+  top: 32px;
 }
 
 .meta-experience .dim-card {
@@ -14,7 +14,7 @@
   margin: auto;
 }
 
-.dim-card:hover {
+.meta-experience .dim-card:hover {
   border: 2px solid #0000;
   background: linear-gradient(#ffffff, #ffffff) padding-box,
     linear-gradient(270deg, #960bcd 0%, #44c9ff 100%);
@@ -37,4 +37,10 @@
   backdrop-filter: blur(10.8px);
   border-radius: 15px;
   padding: 2px 8px;
+}
+
+.meta-experience .dim-card .dim-card-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
 }

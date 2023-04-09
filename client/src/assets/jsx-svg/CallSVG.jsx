@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 
 const CallSVG = (props) => (
   <svg
@@ -11,10 +11,10 @@ const CallSVG = (props) => (
     <g
       data-name="Handset"
       style={{
-        mixBlendMode: "normal",
-        isolation: "isolate",
+        mixBlendMode: 'normal',
+        isolation: 'isolate',
       }}
-      fill={props.color || "#69B0A5"}
+      fill="#69B0A5"
     >
       <path
         data-name="16 Handset"

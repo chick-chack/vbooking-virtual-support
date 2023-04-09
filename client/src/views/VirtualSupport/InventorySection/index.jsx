@@ -38,8 +38,8 @@ export default function InventorySection({ setProductSelected }) {
   }, [selectedCategory]);
 
   return (
-    <section>
-      <Row style={{ marginTop: "24px" }} gutter={[0, 16]}>
+    <section style={{ marginTop: "24px" }}>
+      <Row gutter={[0, 16]}>
         {/* <Col xs={24}>
           <Input
             prefix={<SearchSVG />}
@@ -51,7 +51,7 @@ export default function InventorySection({ setProductSelected }) {
           <Row
             className="inventory-categories"
             wrap={false}
-            style={{ overflowX: "auto" }}
+            style={{ overflowX: "auto", paddingBottom: "1rem" }}
             gutter={[8, 0]}
           >
             <Col onClick={() => setSelectedCategory("")} className="clickable">
@@ -63,7 +63,7 @@ export default function InventorySection({ setProductSelected }) {
                       style={{
                         background:
                           selectedCategory === ""
-                            ? "linear-gradient(270deg, #960BCD 0%, #44C9FF 100%)"
+                            ? "linear-gradient(270deg, #960bcd 0%, #44c9ff 100%)"
                             : "",
                       }}
                     >
@@ -102,7 +102,7 @@ export default function InventorySection({ setProductSelected }) {
                         style={{
                           background:
                             selectedCategory === category.id
-                              ? "linear-gradient(270deg, #960BCD 0%, #44C9FF 100%)"
+                              ? "linear-gradient(270deg, #74b715 0%, #0129b7 100%)"
                               : "",
                         }}
                       >

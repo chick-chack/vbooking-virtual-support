@@ -18,6 +18,16 @@ const getMeetingInfo = (meetingId) => {
     .then((res) => res.data);
 };
 
+const createWhiteboardRoom = () => {
+  return axios.get(`${SERVICE_BASE}/agora/whiteboard/create-room`);
+};
+
+const genWhiteboardRoomToken = (whiteboardRoomId) => {
+  return axios.get(`${SERVICE_BASE}/agora/whiteboard/gen-room-token`, {
+    params: { whiteboardRoomId },
+  });
+};
+
 const createMeeting = (data) => {
   return axios.post(`${SERVICE_BASE}/create`, data);
 };
@@ -41,6 +51,8 @@ const declineMeet = (meetingId) => {
 const SocialEventService = {
   getAgoraRteTokens,
   getMeetingInfo,
+  createWhiteboardRoom,
+  genWhiteboardRoomToken,
   createMeeting,
   attendEvent,
   getMyCalendar,

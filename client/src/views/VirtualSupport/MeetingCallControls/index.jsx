@@ -7,7 +7,7 @@ import {
   Image,
   Menu,
   Modal,
-  notification,
+  // notification,
   Row,
   Tooltip,
   Typography,
@@ -15,19 +15,18 @@ import {
 
 import {
   ArrowDownSVG,
-  BookingsExperienceSVG,
   CallEndSVG,
-  DestinationSVG,
   GroupsSVG,
   MuteVoiceSVG,
   NoSoundSVG,
   NoVideoSVG,
   ScreenSVG,
   SettingFillSVG,
-  ShareDimenstionSVG,
+  // ShareDimenstionSVG,
   SoundSVG,
   VideoSVG,
   VoiceSVG,
+  WebViewSVG,
 } from "assets/jsx-svg";
 import MetaverseService from "services/metaverse.service";
 import "./styles.css";
@@ -40,7 +39,6 @@ export default function MeetingCallControls({
   toggleAudioMute,
   toggleVideo,
   toggleSoundMute,
-  publishScreen,
   unPublishScreen,
   sharingScreen,
   SystemMessage,
@@ -52,8 +50,13 @@ export default function MeetingCallControls({
   userFullName,
   controlSettingsShow,
   setControlSettingsShow,
+  permissions,
+  setPermissions,
+  setActiveBtn,
+  sharingWhiteboard,
+  sharingFile,
+  showArrow,
 }) {
-  const [settings, setSettings] = useState([]);
   const [dimModalOpen, setDimModalOpen] = useState(false);
   const [myDims, setMyDims] = useState([]);
 
@@ -76,14 +79,6 @@ export default function MeetingCallControls({
   }, []);
 
   const settingsMenu = useMemo(() => {
-    const settingsToggle = (value) => {
-      if (settings.includes(value)) {
-        setSettings((prev) => [...prev.filter((item) => item !== value)]);
-      } else {
-        setSettings((prev) => [...prev, value]);
-      }
-    };
-
     return (
       <Row justify="center" align="bottom" className="settings-options">
         <Col xs={24} style={{ marginBottom: "0.5rem" }}>
@@ -95,33 +90,87 @@ export default function MeetingCallControls({
             </Col>
           </Row>
         </Col>
-        <Col xs={24} onClick={() => settingsToggle(1)} className="clickable">
+        <Col
+          xs={24}
+          onClick={() =>
+            setPermissions({ ...permissions, screen: !permissions.screen })
+          }
+          className="clickable"
+        >
           <Row align="middle">
-            <Col xs={2}>{settings.includes(1) ? "✔" : ""}</Col>
+            <Col xs={2}>{permissions.screen ? "✔" : ""}</Col>
             <Col xs={22}>Share Screen</Col>
           </Row>
         </Col>
-        <Col xs={24} onClick={() => settingsToggle(2)} className="clickable">
+        <Col
+          xs={24}
+          onClick={() =>
+            setPermissions({ ...permissions, chat: !permissions.chat })
+          }
+          className="clickable"
+        >
           <Row align="middle">
-            <Col xs={2}>{settings.includes(2) ? "✔" : ""}</Col>
+            <Col xs={2}>{permissions.chat ? "✔" : ""}</Col>
             <Col xs={22}>Chat</Col>
           </Row>
         </Col>
-        <Col xs={24} onClick={() => settingsToggle(3)} className="clickable">
+        <Col
+          xs={24}
+          onClick={() =>
+            setPermissions({ ...permissions, mic: !permissions.mic })
+          }
+          className="clickable"
+        >
           <Row align="middle">
-            <Col xs={2}>{settings.includes(3) ? "✔" : ""}</Col>
+            <Col xs={2}>{permissions.mic ? "✔" : ""}</Col>
             <Col xs={22}>Unmute Themselves</Col>
           </Row>
         </Col>
-        <Col xs={24} onClick={() => settingsToggle(4)} className="clickable">
+        <Col
+          xs={24}
+          onClick={() =>
+            setPermissions({ ...permissions, cam: !permissions.cam })
+          }
+          className="clickable"
+        >
           <Row align="middle">
-            <Col xs={2}>{settings.includes(4) ? "✔" : ""}</Col>
+            <Col xs={2}>{permissions.cam ? "✔" : ""}</Col>
             <Col xs={22}>Start Video</Col>
+          </Row>
+        </Col>
+        <Col
+          xs={24}
+          onClick={() =>
+            setPermissions({
+              ...permissions,
+              whiteboard: !permissions.whiteboard,
+            })
+          }
+          className="clickable"
+        >
+          <Row align="middle">
+            <Col xs={2}>{permissions.whiteboard ? "✔" : ""}</Col>
+            <Col xs={22}>Use Whiteboard</Col>
+          </Row>
+        </Col>
+        <Col
+          xs={24}
+          onClick={() =>
+            setPermissions({
+              ...permissions,
+              canDownload: !permissions.canDownload,
+            })
+          }
+          className="clickable"
+        >
+          <Row align="middle">
+            <Col xs={2}>{permissions.canDownload ? "✔" : ""}</Col>
+            <Col xs={22}>Allow Download</Col>
           </Row>
         </Col>
       </Row>
     );
-  }, [settings]);
+  }, [permissions, setPermissions]);
 
   const endMenu = useMemo(
     () => (
@@ -147,6 +196,47 @@ export default function MeetingCallControls({
     [navigate, SystemMessage],
   );
 
+  const endCurrentShareLabel = useMemo(() => {
+    let onClick;
+    let text;
+
+    if (sharingScreen) {
+      onClick = unPublishScreen;
+      text = "Stop Screen Share";
+    } else if (sharingDim) {
+      onClick = SystemMessage.stopDim;
+      text = "Stop Dimension Share";
+    } else if (sharingWhiteboard) {
+      onClick = SystemMessage.stopWhiteboard;
+      text = "Stop Whiteboard Share";
+    } else if (sharingFile) {
+      onClick = SystemMessage.stopFilePreview;
+      text = "Stop File Share";
+    } else {
+      return null;
+    }
+
+    return (
+      <Row align="middle" gutter={[8, 0]} wrap={false} onClick={onClick}>
+        <Col>
+          <Row align="middle">
+            <ScreenSVG color="#fff" style={{ width: "16px", height: "16px" }} />
+          </Row>
+        </Col>
+        <Col>
+          <Typography.Text className="fz-16 wc fw-300">{text}</Typography.Text>
+        </Col>
+      </Row>
+    );
+  }, [
+    SystemMessage,
+    sharingDim,
+    sharingFile,
+    sharingScreen,
+    sharingWhiteboard,
+    unPublishScreen,
+  ]);
+
   return (
     <>
       <Row
@@ -154,7 +244,7 @@ export default function MeetingCallControls({
         justify="space-between"
         style={{ padding: "10px 14px", position: "relative" }}
       >
-        {(sharingDim || joinedSharedDim) && (
+        {showArrow && (
           <span
             className="open-settings clickable"
             onClick={() => setControlSettingsShow((prev) => !prev)}
@@ -242,122 +332,27 @@ export default function MeetingCallControls({
                       ),
                       style: { pointerEvents: "none" },
                     },
-                    // {
-                    //   key: "1",
-                    //   label: (
-                    //     <Row
-                    //       align="middle"
-                    //       gutter={[8, 0]}
-                    //       wrap={false}
-                    //       onClick={() => {
-                    //         if (sharingScreen) unPublishScreen();
-                    //         else publishScreen();
-                    //       }}
-                    //     >
-                    //       <Col>
-                    //         <Row align="middle">
-                    //           <ScreenSVG
-                    //             color="#fff"
-                    //             style={{ width: "16px", height: "16px" }}
-                    //           />
-                    //         </Row>
-                    //       </Col>
-                    //       <Col>
-                    //         <Typography.Text className="fz-16 wc fw-300">
-                    //           {sharingScreen ? "Stop Screen Share" : "Screen"}
-                    //         </Typography.Text>
-                    //       </Col>
-                    //     </Row>
-                    //   ),
-                    // },
+                    {
+                      key: "1",
+                      label: (
+                        <Row align="middle" gutter={[8, 0]} wrap={false}>
+                          <Col>
+                            <Row align="middle">
+                              <WebViewSVG />
+                            </Row>
+                          </Col>
+                          <Col>
+                            <Typography.Text className="fz-16 wc fw-300">
+                              Share Tools
+                            </Typography.Text>
+                          </Col>
+                        </Row>
+                      ),
+                      onClick: () => setActiveBtn("tools"),
+                    },
                     {
                       key: "2",
-                      label: (
-                        <Row
-                          style={{ marginBottom: "8px" }}
-                          align="middle"
-                          gutter={[8, 0]}
-                          wrap={false}
-                        >
-                          <Col>
-                            <Row align="middle">
-                              <BookingsExperienceSVG
-                                color="#fff"
-                                style={{ width: "16px", height: "16px" }}
-                              />
-                            </Row>
-                          </Col>
-                          <Col>
-                            <Typography.Text className="fz-16 wc fw-300">
-                              Bookings Experience
-                            </Typography.Text>
-                          </Col>
-                        </Row>
-                      ),
-                    },
-                    {
-                      key: "3",
-                      label: (
-                        <Row
-                          style={{ marginBottom: "8px" }}
-                          align="middle"
-                          gutter={[8, 0]}
-                          wrap={false}
-                        >
-                          <Col>
-                            <Row align="middle">
-                              <ShareDimenstionSVG
-                                color="#fff"
-                                style={{ width: "16px", height: "16px" }}
-                              />
-                            </Row>
-                          </Col>
-                          <Col
-                            onClick={() => {
-                              if (sharingDim) {
-                                unPublishDim();
-                              } else {
-                                if (myDims.length > 0) setDimModalOpen(true);
-                                else
-                                  notification.warn({
-                                    message: "You don't have any dimensions",
-                                  });
-                              }
-                            }}
-                          >
-                            <Typography.Text className="fz-16 wc fw-300">
-                              {sharingDim
-                                ? "Stop Dimension Share"
-                                : "Metaverse Experience"}
-                            </Typography.Text>
-                          </Col>
-                        </Row>
-                      ),
-                    },
-                    {
-                      key: "4",
-                      label: (
-                        <Row
-                          style={{ marginBottom: "8px" }}
-                          align="middle"
-                          gutter={[8, 0]}
-                          wrap={false}
-                        >
-                          <Col>
-                            <Row align="middle">
-                              <DestinationSVG
-                                color="#fff"
-                                style={{ width: "16px", height: "16px" }}
-                              />
-                            </Row>
-                          </Col>
-                          <Col>
-                            <Typography.Text className="fz-16 wc fw-300">
-                              Destination
-                            </Typography.Text>
-                          </Col>
-                        </Row>
-                      ),
+                      label: endCurrentShareLabel,
                     },
                   ]}
                 />
@@ -367,7 +362,7 @@ export default function MeetingCallControls({
                 className="icon-wrapper"
                 style={{
                   background:
-                    "linear-gradient(270deg, #960BCD 0%, #44C9FF 100%)",
+                    "linear-gradient(270deg, #960bcd 0%, #44c9ff 100%)",
                   opacity: isHost ? "1" : "0.5",
                   pointerEvents: isHost ? "auto" : "none",
                 }}
@@ -386,7 +381,11 @@ export default function MeetingCallControls({
                 <Tooltip title={audioMuted ? "Unmute" : "Mute"}>
                   <div
                     className="center-items clickable"
-                    onClick={toggleAudioMute}
+                    onClick={() => {
+                      if (!isHost && !permissions.mic) return;
+
+                      toggleAudioMute();
+                    }}
                   >
                     {audioMuted ? (
                       <MuteVoiceSVG
@@ -406,7 +405,14 @@ export default function MeetingCallControls({
                 <Tooltip
                   title={!cameraEnabled ? "Turn on Camera" : "Turn off Camera"}
                 >
-                  <div className="center-items clickable" onClick={toggleVideo}>
+                  <div
+                    className="center-items clickable"
+                    onClick={() => {
+                      if (!isHost && !permissions.cam) return;
+
+                      toggleVideo();
+                    }}
+                  >
                     {!cameraEnabled ? (
                       <NoVideoSVG
                         color="#fff"

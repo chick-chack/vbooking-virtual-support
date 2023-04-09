@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
+import { Col, Image, Row, notification } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+import axios from "axios";
 
 import VverseRouter from "router";
-// import NotAuthRouter from "router/NotAuthRouter";
+import NotAuthRouter from "router/NotAuthRouter";
 
 import UserContext from "context/userContext";
-import { notification } from "antd";
+import AuthService from "services/auth.service";
+
+import logo from "assets/images/logo.png";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -26,39 +31,49 @@ function App() {
     };
   }, []);
 
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       const {
-  //         data: { data: user },
-  //       } = await AuthService.getAuth();
+  useEffect(() => {
+    (async () => {
+      try {
+        const {
+          data: { data: user },
+        } = await AuthService.getAuth();
 
-  //       localStorage.setItem(
-  //         "vverse-token",
-  //         user.customerWebDashboardAccessToken,
-  //       );
-  //       setUser(user);
-  //       axios.defaults.headers.authorization =
-  //         user.customerWebDashboardAccessToken;
-  //     } catch (ignored) {
-  //       setUser(null);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   })();
-  // }, []);
+        localStorage.setItem(
+          "vverse-token",
+          user.customerWebDashboardAccessToken,
+        );
+        setUser(user);
+        axios.defaults.headers.authorization =
+          user.customerWebDashboardAccessToken;
+      } catch (ignored) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return loading ? (
-    <div className="loading-holder">
-      <video autoPlay muted loop className="video-loading">
-        <source src={require("./assets/loading.mp4")} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+    <div
+      style={{ width: "100vw", height: "100vh", background: "#fff" }}
+      className="center-items"
+    >
+      <Row gutter={[0, 30]}>
+        <Col xs={24}>
+          <Row justify={"center"}>
+            <Image preview={false} src={logo} alt="vbooling Logo" />
+          </Row>
+        </Col>
+        <Col xs={24}>
+          <Row justify={"center"}>
+            <LoadingOutlined />
+          </Row>
+        </Col>
+      </Row>
     </div>
   ) : (
     <UserContext.Provider value={{ user, setUser }}>
-      <VverseRouter />
-      {/* {user ? <VverseRouter /> : <NotAuthRouter />} */}
+      {user ? <VverseRouter /> : <NotAuthRouter />}
     </UserContext.Provider>
   );
 }

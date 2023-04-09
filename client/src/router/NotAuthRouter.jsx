@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Layout } from "antd";
 import { Content } from "antd/es/layout/layout";
 
@@ -13,7 +13,6 @@ export default function NotAuthRouter() {
       <Content style={{ background: "#fff" }}>
         <Routes>
           <Route index path="/login" element={<LoginView />} />
-          <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </Content>
     </Layout>

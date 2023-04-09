@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 const MoreSVG = (props) => (
   <svg
@@ -8,7 +8,11 @@ const MoreSVG = (props) => (
     viewBox="0 0 30 6"
     {...props}
   >
-    <g data-name="Group 1244" transform="translate(-1056 -229)" fill="#a5a299">
+    <g
+      data-name="Group 1244"
+      transform="translate(-1056 -229)"
+      fill={props.color || "#a5a299"}
+    >
       <circle
         data-name="Ellipse 31"
         cx={3}

@@ -8,12 +8,12 @@ import {
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  Avatar,
   Col,
   Dropdown,
   Image,
   Menu,
   message,
-  Modal,
   notification,
   Row,
   Tooltip,
@@ -21,6 +21,7 @@ import {
 } from "antd";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import AgoraChat from "agora-chat";
+import { createFastboard, apps } from "@netless/fastboard";
 
 import userContext from "context/userContext";
 import SocialEventService from "services/social-event.service";
@@ -35,12 +36,14 @@ import {
   LinkSVG,
   AddUserSVG,
   SMSSVG,
+  ToolsSVG,
+  FileSVG,
 } from "assets/jsx-svg";
+
 import MeetingScreen from "./MeetingScreen";
 import MeetAsaider from "./MeetAsaider";
-import "./styles.css";
 import InviteFriends from "./InviteFriends";
-import Holomeet from "./Holomeet";
+import "./styles.css";
 import { LoadingOutlined } from "@ant-design/icons";
 
 const inviteMenu = (
@@ -108,8 +111,32 @@ const inviteMenu = (
   />
 );
 
-const formatSystemMsg = (msg) => `SYSTEM_${msg}_SYSTEM`;
-const isSystemMsg = (msg) => /^SYSTEM_[\s\S]*_SYSTEM$/.test(msg);
+const slideResponsive = [
+  {
+    breakpoint: 3000,
+    settings: {
+      slidesToShow: 4,
+      slidesToScroll: 4,
+    },
+  },
+  {
+    breakpoint: 1480,
+    settings: {
+      slidesToShow: 3,
+      slidesToScroll: 3,
+    },
+  },
+  {
+    breakpoint: 1120,
+    settings: {
+      slidesToShow: 3,
+      slidesToScroll: 3,
+    },
+  },
+];
+
+const formatSystemMsg = (msg) => `SYSTEM%%%${msg}`;
+const isSystemMsg = (msg) => /^SYSTEM%%%[\s\S]*/.test(msg);
 
 export default function VirtualSupportView({
   micId,
@@ -130,50 +157,37 @@ export default function VirtualSupportView({
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [mainScreenId, setMainScreenId] = useState(null);
   const [sharingDimId, setSharingDimId] = useState(null);
+  const [sharingFile, setSharingFile] = useState(null);
   const [sharedDimId, setSharedDimId] = useState(null);
+  const [fastboard, setFastboard] = useState(null);
   const [joinedSharedDim, setJoinedSharedDim] = useState(false);
   const [talking, setTalking] = useState(false);
-  const [hideSider, setHideSider] = useState(false);
-  const [holoModalOpen, setHoloModalOpen] = useState(false);
+  const [sharedFiles, setSharedFiles] = useState([]);
+  const [permissions, setPermissions] = useState({
+    screen: false,
+    chat: true,
+    mic: true,
+    cam: false,
+    whiteboard: false,
+    canDownload: true,
+  });
+  const [hideSide, setHideSide] = useState(false);
+
   const { user } = useContext(userContext);
   const joinTriesRef = useRef(1);
   const soundMutedRef = useRef();
   const { meetingId } = useParams();
   const navigate = useNavigate();
 
-  const slideResponsive = useMemo(
-    () => [
-      {
-        breakpoint: 3000,
-        settings: {
-          slidesToShow: hideSider ? 5 : 4,
-          slidesToScroll: hideSider ? 5 : 4,
-        },
-      },
-      {
-        breakpoint: 1480,
-        settings: {
-          slidesToShow: hideSider ? 4 : 3,
-          slidesToScroll: hideSider ? 4 : 3,
-        },
-      },
-      {
-        breakpoint: 1120,
-        settings: {
-          slidesToShow: 3,
-          slidesToScroll: 3,
-        },
-      },
-    ],
-    [hideSider],
-  );
-
-  const myUidRef = useRef(user?.id);
+  const userRef = useRef(user);
   const micIdRef = useRef(micId);
   const camIdRef = useRef(camId);
   const playbackDeviceIdRef = useRef(playbackDeviceId);
   const startMicMutedRef = useRef(startMicMuted);
   const startCamActiveRef = useRef(startCamActive);
+  const chatRoomIdRef = useRef(chatRoomId);
+  const meetingRef = useRef(meeting);
+
   const agoraClient = useRef(
     AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }),
   );
@@ -193,6 +207,7 @@ export default function VirtualSupportView({
     () => meeting?.customerId === user.id,
     [meeting, user],
   );
+  const isHostRef = useRef(isHost);
 
   const audioMuted = useMemo(
     () => (localAudioTrack ? localAudioTrack.muted : true),
@@ -297,7 +312,12 @@ export default function VirtualSupportView({
   }, [localAudioTrack, localScreenTrack, localVideoTrack, remoteUsers, user]);
 
   const mainScreen = useMemo(() => {
-    if (sharingDimId || (sharedDimId && joinedSharedDim)) {
+    if (
+      sharingDimId ||
+      sharingFile ||
+      fastboard ||
+      (sharedDimId && joinedSharedDim)
+    ) {
       return null;
     }
 
@@ -317,7 +337,16 @@ export default function VirtualSupportView({
     }
 
     return myRtcScreen;
-  }, [sharingDimId, sharedDimId, joinedSharedDim, mainScreenId, screens, user]);
+  }, [
+    sharingDimId,
+    sharingFile,
+    fastboard,
+    sharedDimId,
+    joinedSharedDim,
+    mainScreenId,
+    screens,
+    user.id,
+  ]);
 
   const otherScreens = useMemo(
     () => screens.filter((screen) => screen.screenId !== mainScreen?.screenId),
@@ -361,15 +390,68 @@ export default function VirtualSupportView({
     isHost,
     meeting,
   ]);
+  const participantsRef = useRef(participants);
+
+  const sharingFileScreenObj = useMemo(
+    () => ({ type: "file", file: sharingFile }),
+    [sharingFile],
+  );
 
   const sharingDimScreenObj = useMemo(
     () => ({ type: "dim", dimensionId: sharingDimId }),
     [sharingDimId],
   );
+
   const sharedDimScreenObj = useMemo(
     () => ({ type: "dim", dimensionId: sharedDimId }),
     [sharedDimId],
   );
+
+  const whiteboardScreenObj = useMemo(
+    () => ({ type: "whiteboard", room: fastboard }),
+    [fastboard],
+  );
+
+  const sendMessage = useCallback(async (_text) => {
+    try {
+      if (agoraChatClient.current.isOpened() && chatRoomIdRef.current) {
+        if (isSystemMsg(_text)) {
+          await agoraChatClient.current.send(
+            AgoraChat.message.create({
+              chatType: "chatRoom",
+              type: "txt",
+              to: chatRoomIdRef.current,
+              msg: _text,
+            }),
+          );
+        } else {
+          const text = `${userRef.current.fullName}%%%${userRef.current.profileImage}%%%${_text}`;
+
+          await agoraChatClient.current.send(
+            AgoraChat.message.create({
+              chatType: "chatRoom",
+              type: "txt",
+              to: chatRoomIdRef.current,
+              msg: text,
+            }),
+          );
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              from: userRef.current.id,
+              msg: _text,
+              profileImage: userRef.current.profileImage,
+              name: userRef.current.fullName,
+              owner: true,
+            },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.log(`Error sending message: ${error.message}`);
+    }
+  }, []);
 
   const publishAudio = useCallback(async () => {
     try {
@@ -477,12 +559,149 @@ export default function VirtualSupportView({
       if (localDimTrack) {
         localDimTrack.close();
         await agoraDimClient.current.unpublish(localDimTrack);
-        setSharingDimId(null);
       }
     } catch (error) {
-      console.error(`Error publishing video track: ${error.message}`);
+      console.error(`Error un publishing dim track: ${error.message}`);
     }
   }, []);
+
+  const SystemMessage = useMemo(() => {
+    return {
+      shareFile: (file) => {
+        setSharingFile(file);
+        sendMessage(
+          formatSystemMsg(
+            `PREVIEWFILE%%%${userRef.current.id}%%%${JSON.stringify(file)}`,
+          ),
+        );
+      },
+
+      shareDim: (dimId) => {
+        setSharingDimId(dimId);
+        sendMessage(
+          formatSystemMsg(`SHAREDIM%%%${userRef.current.id}%%%${dimId}`),
+        );
+      },
+
+      shareWhiteboard: (whiteboardRoomId) =>
+        sendMessage(
+          formatSystemMsg(
+            `SHAREWHITEBOARD%%%${userRef.current.id}%%%${whiteboardRoomId}`,
+          ),
+        ),
+
+      changePermissions: (permissions) =>
+        sendMessage(
+          formatSystemMsg(`PERMISSIONS%%%${JSON.stringify(permissions)}`),
+        ),
+
+      changeSharedFiles: (files) =>
+        sendMessage(formatSystemMsg(`SHAREDFILES%%%${JSON.stringify(files)}`)),
+
+      stopFilePreview: () => {
+        setSharingFile(null);
+        sendMessage(formatSystemMsg("ENDFILEPREVIEW"));
+      },
+
+      stopWhiteboard: () => {
+        setFastboard((prev) => {
+          if (prev) {
+            try {
+              prev.destroy();
+            } catch (error) {
+              console.log("Error destroying fastboard", error.message);
+            }
+          }
+
+          return null;
+        });
+        sendMessage(formatSystemMsg("ENDWHITEBOARD"));
+      },
+
+      stopDim: () => {
+        unPublishDim();
+        setSharingDimId(null);
+        sendMessage(formatSystemMsg("ENDDIM"));
+      },
+
+      endMeeting: () => sendMessage(formatSystemMsg("ENDMEETING")),
+    };
+  }, [sendMessage, unPublishDim]);
+
+  const joinWhiteboardRoom = useCallback(async (whiteboardRoomId) => {
+    try {
+      const {
+        data: { whiteboardRoomToken },
+      } = await SocialEventService.genWhiteboardRoomToken(whiteboardRoomId);
+
+      const fastboard = await createFastboard({
+        sdkConfig: {
+          appIdentifier: process.env.REACT_APP_AGORA_WHITEBOARD_APP_ID,
+          region: "gb-lon",
+        },
+        joinRoom: {
+          uid: `${userRef.current.id}`,
+          uuid: whiteboardRoomId,
+          roomToken: whiteboardRoomToken,
+          userPayload: {
+            nickName: userRef.current.fullName,
+          },
+        },
+        managerConfig: {
+          cursor: true,
+        },
+      });
+
+      apps.push(
+        {
+          icon: "https://api.iconify.design/logos:youtube-icon.svg?color=currentColor",
+          kind: "Plyr",
+          label: "YouTube",
+          onClick() {
+            setActiveBtn("youtubeLink");
+          },
+        },
+        {
+          icon: "https://png.pngtree.com/png-vector/20190514/ourmid/pngtree-emb--file-format-icon-design-png-image_1040671.jpg",
+          kind: "EmbeddedPage",
+          label: "Embed",
+          onClick(app) {
+            app.manager.addApp({
+              kind: "EmbeddedPage",
+              options: { title: "Embed" },
+              attributes: {
+                src: window.embed,
+              },
+            });
+          },
+        },
+      );
+
+      setFastboard(fastboard);
+      return true;
+    } catch (error) {
+      console.log(`Error joining whiteboard: ${error.message}`);
+      console.log(error);
+      return false;
+    }
+  }, []);
+
+  const shareWhiteboard = useCallback(async () => {
+    try {
+      const {
+        data: { whiteboardRoomId },
+      } = await SocialEventService.createWhiteboardRoom();
+
+      const createdAndJoined = await joinWhiteboardRoom(whiteboardRoomId);
+
+      if (createdAndJoined) {
+        SystemMessage.shareWhiteboard(whiteboardRoomId);
+      }
+    } catch (error) {
+      console.log(`Error sharing whiteboard: ${error.message}`);
+      console.log(error);
+    }
+  }, [SystemMessage, joinWhiteboardRoom]);
 
   const initMeeting = useCallback(
     async (meeting) => {
@@ -507,12 +726,14 @@ export default function VirtualSupportView({
           agoraRte.rtcToken,
           user.id,
         );
+
         await agoraScreenClient.current.join(
           appId,
           meetingId,
           agoraRte.rtcScreenToken,
           user.id + 1e9,
         );
+
         await agoraDimClient.current.join(
           appId,
           meetingId,
@@ -531,53 +752,11 @@ export default function VirtualSupportView({
         });
 
         const roomId = rooms.find((room) => room.name === meetingId)?.id;
-        if (roomId) {
-          await agoraChatClient.current.joinChatRoom({ roomId });
-
-          try {
-            let cursor = -1;
-
-            while (true) {
-              const { messages } =
-                await agoraChatClient.current.getHistoryMessages({
-                  chatType: "chatRoom",
-                  targetId: roomId,
-                  searchDirection: "down",
-                  pageSize: 50,
-                  cursor,
-                });
-
-              if (messages.length === 0) break;
-
-              const filteredMessages = messages.filter(
-                (message) => !isSystemMsg(message.msg),
-              );
-
-              setMessages((prev) => [
-                ...prev,
-                ...filteredMessages.map((message) => {
-                  const name = message.msg.split("%%%")[0];
-                  const profileImage = message.msg.split("%%%")[1];
-                  const text = message.msg.split("%%%")[2];
-
-                  return {
-                    from: message.from,
-                    msg: text,
-                    profileImage,
-                    name,
-                    owner: Number(message.from) === myUidRef.current,
-                  };
-                }),
-              ]);
-
-              cursor = messages[messages.length - 1].id;
-            }
-          } catch (error) {
-            console.error("Failed to fetch chat history", error);
-          }
-
-          setChatRoomId(roomId);
+        if (!roomId) {
+          throw new Error(`Could not find roomId for meetingId: ${meetingId}`);
         }
+
+        await agoraChatClient.current.joinChatRoom({ roomId });
 
         try {
           await publishAudio();
@@ -589,7 +768,17 @@ export default function VirtualSupportView({
           } catch (ignored) {}
         }
 
-        setLoading(false);
+        if (isHostRef.current) {
+          await agoraChatClient.current.send(
+            AgoraChat.message.create({
+              chatType: "chatRoom",
+              type: "txt",
+              to: roomId,
+              msg: formatSystemMsg("HOSTJOINED"),
+            }),
+          );
+        }
+        setChatRoomId(roomId);
       } catch (error) {
         console.error(`Error joining meeting: ${error.message}`);
 
@@ -599,89 +788,66 @@ export default function VirtualSupportView({
         }, 250);
       }
     },
-    [navigate, meetingId, user.id, publishAudio, publishCamera],
+    [navigate, meetingId, user, publishAudio, publishCamera],
   );
-
-  const sendMessage = useCallback(
-    async (_text) => {
-      try {
-        if (agoraChatClient.current.isOpened() && chatRoomId) {
-          if (isSystemMsg(_text)) {
-            await agoraChatClient.current.send(
-              AgoraChat.message.create({
-                chatType: "chatRoom",
-                type: "txt",
-                to: chatRoomId,
-                msg: _text,
-              }),
-            );
-          } else {
-            const text = `${user.fullName}%%%${user.profileImage}%%%${_text}`;
-
-            await agoraChatClient.current.send(
-              AgoraChat.message.create({
-                chatType: "chatRoom",
-                type: "txt",
-                to: chatRoomId,
-                msg: text,
-              }),
-            );
-
-            setMessages((prev) => [
-              ...prev,
-              {
-                from: user.id,
-                msg: _text,
-                profileImage: user.profileImage,
-                name: user.fullName,
-                owner: true,
-              },
-            ]);
-          }
-        }
-      } catch (error) {
-        console.log(`Error sending message: ${error.message}`);
-      }
-    },
-    [chatRoomId, user],
-  );
-
-  const SystemMessage = useMemo(() => {
-    return {
-      shareDim: (dimId) => {
-        sendMessage(formatSystemMsg(`SHAREDIM_${user.id}_${dimId}`));
-        setSharingDimId(dimId);
-      },
-      endMeeting: () => sendMessage(formatSystemMsg("END_MEETING")),
-    };
-  }, [sendMessage, user]);
 
   const handleSystemMsg = useCallback(
     (msg) => {
-      if (msg.includes("END_MEETING")) {
+      if (msg.includes("ENDMEETING")) {
         notification.info({
           message: "Host has ended this meeting.",
         });
         navigate("/meetings");
+      } else if (msg.includes("ENDFILEPREVIEW")) {
+        setSharingFile(null);
+      } else if (msg.includes("ENDWHITEBOARD")) {
+        setFastboard(null);
+      } else if (msg.includes("ENDDIM")) {
+        setSharedDimId(null);
+        setJoinedSharedDim(false);
+      } else if (msg.includes("SHAREWHITEBOARD")) {
+        const whiteboardRoomId = msg.split("%%%")[3];
+        joinWhiteboardRoom(whiteboardRoomId);
+        notification.info({
+          message: "Host is sharing a whiteboard.",
+        });
       } else if (msg.includes("SHAREDIM")) {
-        const dimId = msg.split("_")[3];
+        const dimId = msg.split("%%%")[3];
         setSharedDimId(Number(dimId));
         notification.info({
           message:
             'Host is sharing a dimension. Click "Join Dimension" to join the shared dimension.',
         });
+      } else if (msg.includes("PERMISSIONS")) {
+        try {
+          const perms = JSON.parse(msg.split("%%%")[2]);
+          setPermissions(perms);
+        } catch (ignored) {}
+      } else if (msg.includes("SHAREDFILES")) {
+        try {
+          const files = JSON.parse(msg.split("%%%")[2]);
+          setSharedFiles(files);
+        } catch (ignored) {}
+      } else if (msg.includes("PREVIEWFILE")) {
+        try {
+          const file = JSON.parse(msg.split("%%%")[3]);
+          setSharingFile(file);
+          notification.info({
+            message: "Host is sharing a file.",
+          });
+        } catch (ignored) {}
       }
     },
-    [navigate],
+    [joinWhiteboardRoom, navigate],
   );
 
   const setMainScreen = useCallback(
     (id) => {
-      if (!sharingDimId && !joinedSharedDim) {
+      if (!sharingFile && !sharingDimId && !joinedSharedDim) {
         setMainScreenId(id);
       }
     },
-    [joinedSharedDim, sharingDimId],
+    [sharingFile, sharingDimId, joinedSharedDim],
   );
 
   const toggleAudioMute = useCallback(async () => {
@@ -692,6 +858,25 @@ export default function VirtualSupportView({
 
       if (localAudioTrack) {
         await localAudioTrack.setMuted(!localAudioTrack.muted);
+
+        setLocalAudioTrack({
+          muted: localAudioTrack.muted,
+          enabled: localAudioTrack.enabled,
+        });
+      }
+    } catch (error) {
+      console.error(`Error muting audio track: ${error.message}`);
+    }
+  }, []);
+
+  const forceMuteMic = useCallback(async () => {
+    try {
+      const localAudioTrack = agoraClient.current.localTracks.find(
+        (track) => track.trackMediaType === "audio",
+      );
+
+      if (localAudioTrack && !localAudioTrack.muted) {
+        await localAudioTrack.setMuted(true);
 
         setLocalAudioTrack({
           muted: localAudioTrack.muted,
@@ -818,6 +1003,10 @@ export default function VirtualSupportView({
             agoraClient.current.on("user-left", async (leavingUser) => {
               if (leavingUser.uid > 1e6) return;
 
+              if (leavingUser.uid === meetingRef.current.customerId) {
+                SystemMessage.stopWhiteboard();
+              }
+
               setRemoteUsers((prev) => {
                 let remoteUsers = [...prev];
 
@@ -927,7 +1116,7 @@ export default function VirtualSupportView({
                       return remoteUsers;
                     });
 
-                    if (unPublishingUser.uid - 1e9 === myUidRef.current) {
+                    if (unPublishingUser.uid - 1e9 === userRef.current.id) {
                       await unPublishScreen();
                     }
                   } else if (unPublishingUser.uid > 1e6) {
@@ -945,10 +1134,7 @@ export default function VirtualSupportView({
                       return remoteUsers;
                     });
 
-                    setSharedDimId(null);
-                    setJoinedSharedDim(false);
-
-                    if (unPublishingUser.uid - 1e6 === myUidRef.current) {
+                    if (unPublishingUser.uid - 1e6 === userRef.current.id) {
                       await unPublishDim();
                     }
                   } else {
@@ -1004,7 +1190,7 @@ export default function VirtualSupportView({
               if (!arr?.length) return;
 
               const myVol =
-                arr.find((vol) => vol.uid === myUidRef.current)?.level || 0;
+                arr.find((vol) => vol.uid === userRef.current.id)?.level || 0;
 
               setTalking(myVol >= 30);
 
@@ -1044,50 +1230,171 @@ export default function VirtualSupportView({
     handleSystemMsg,
     unPublishScreen,
     unPublishDim,
+    SystemMessage,
   ]);
 
   useEffect(() => {
-    (async () => {
-      const remoteSharingDim = remoteUsers.some(
-        (remoteUser) => remoteUser.hasDim,
-      );
-
-      if (remoteSharingDim && !sharedDimId) {
+    if (chatRoomId) {
+      (async () => {
         try {
           let cursor = -1;
+          let systemMessages = [];
+
           while (true) {
             const { messages } =
               await agoraChatClient.current.getHistoryMessages({
                 chatType: "chatRoom",
                 targetId: chatRoomId,
-                searchDirection: "up",
+                searchDirection: "down",
                 pageSize: 50,
                 cursor,
               });
 
-            if (messages.length === 0) return;
+            if (messages.length === 0) break;
 
-            const dimMsg = messages.find(
-              (message) =>
-                isSystemMsg(message.msg) && message.msg.includes("SHAREDIM"),
-            )?.msg;
+            const normalMsgs = messages.filter((message) => {
+              if (isSystemMsg(message.msg)) {
+                systemMessages.push(message);
+                return false;
+              } else {
+                return true;
+              }
+            });
 
-            if (!dimMsg) {
-              cursor = messages[messages.length - 1].id;
-              continue;
+            setMessages((prev) => [
+              ...prev,
+              ...normalMsgs.map((message) => {
+                const name = message.msg.split("%%%")[0];
+                const profileImage = message.msg.split("%%%")[1];
+                const text = message.msg.split("%%%")[2];
+
+                return {
+                  from: message.from,
+                  msg: text,
+                  profileImage,
+                  name,
+                  owner: Number(message.from) === userRef.current.id,
+                };
+              }),
+            ]);
+
+            cursor = messages[messages.length - 1].id;
+          }
+
+          let shareFile = null;
+          let whiteboardRoomId = null;
+          let shareDim = null;
+          let permissions = {};
+          let sharedFiles = [];
+
+          systemMessages.forEach(async (message) => {
+            if (message.msg.includes("HOSTJOINED")) {
+              shareFile = null;
+              whiteboardRoomId = null;
+              shareDim = null;
+            } else if (message.msg.includes("ENDFILEPREVIEW")) {
+              shareFile = null;
+            } else if (message.msg.includes("ENDWHITEBOARD")) {
+              whiteboardRoomId = null;
+            } else if (message.msg.includes("ENDDIM")) {
+              shareDim = null;
+            } else if (message.msg.includes("SHAREWHITEBOARD")) {
+              const roomId = message.msg.split("%%%")[3];
+              whiteboardRoomId = roomId;
+            } else if (message.msg.includes("SHAREDIM")) {
+              const dimId = message.msg.split("%%%")[3];
+              shareDim = dimId;
+            } else if (message.msg.includes("PERMISSIONS")) {
+              try {
+                const perms = JSON.parse(message.msg.split("%%%")[2]);
+                permissions = perms;
+              } catch (ignored) {}
+            } else if (message.msg.includes("SHAREDFILES")) {
+              try {
+                const files = JSON.parse(message.msg.split("%%%")[2]);
+                sharedFiles = files;
+              } catch (ignored) {}
+            } else if (message.msg.includes("PREVIEWFILE")) {
+              try {
+                const file = JSON.parse(message.msg.split("%%%")[3]);
+                shareFile = file;
+              } catch (ignored) {}
+            }
+          });
+
+          setPermissions(permissions);
+          setSharedFiles(sharedFiles);
+
+          const isHostPresent = participantsRef.current?.some(
+            (p) => p.uid === meetingRef.current?.customerId,
+          );
+
+          if (!isHostRef.current && isHostPresent) {
+            if (shareFile) {
+              notification.info({
+                message: "Host is sharing a file.",
+              });
+              setSharingFile(shareFile);
             }
 
-            const dimId = dimMsg.split("_")[3];
-            setSharedDimId(Number(dimId));
-            return;
+            if (whiteboardRoomId) {
+              notification.info({
+                message: "Host is sharing a whiteboard.",
+              });
+              joinWhiteboardRoom(whiteboardRoomId);
+            }
+
+            if (shareDim) {
+              notification.info({
+                message:
+                  'Host is sharing a dimension. Click "Join Dimension" to join the shared dimension.',
+              });
+              setSharedDimId(Number(shareDim));
+            }
           }
-        } catch (ignored) {}
-      }
-    })();
-  }, [remoteUsers, chatRoomId, sharedDimId]);
+
+          setLoading(false);
+        } catch (error) {
+          console.error("Failed to fetch chat history", error);
+        }
+      })();
+    }
+  }, [joinWhiteboardRoom, chatRoomId]);
 
   useEffect(() => {
-    myUidRef.current = user?.id;
+    if (isHost) {
+      SystemMessage.changePermissions(permissions);
+    }
+  }, [isHost, SystemMessage, permissions]);
+
+  useEffect(() => {
+    if (isHost) {
+      SystemMessage.changeSharedFiles(sharedFiles);
+    }
+  }, [isHost, SystemMessage, sharedFiles]);
+
+  useEffect(() => {
+    if (!isHost && !permissions.screen) unPublishScreen();
+
+    if (!isHost && !permissions.mic) forceMuteMic();
+
+    if (!isHost && !permissions.cam) unPublishCamera();
+
+    if (fastboard) {
+      if (isHost || permissions.whiteboard) fastboard.room.setWritable(true);
+      else fastboard.room.setWritable(false);
+    }
+  }, [
+    isHost,
+    fastboard,
+    permissions,
+    unPublishScreen,
+    forceMuteMic,
+    unPublishCamera,
+  ]);
+
+  useEffect(() => {
+    userRef.current = user;
   }, [user]);
 
   useEffect(() => {
@@ -1095,35 +1402,24 @@ export default function VirtualSupportView({
   }, [soundMuted]);
 
   useEffect(() => {
-    return async () => {
-      try {
-        console.info("Leaving the meeting");
-        setLoading(true);
-        await unPublishCamera();
-        await unPublishDim();
-        await unPublishScreen();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        await agoraDimClient.current.leave();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        await agoraScreenClient.current.leave();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        await agoraClient.current.leave();
-        setLocalAudioTrack(null);
-        setLocalVideoTrack(null);
-        setLocalScreenTrack(null);
-        setRemoteUsers([]);
-        setSharedDimId(null);
-        setSharingDimId(null);
-        setJoinedSharedDim(false);
-      } catch (error) {
-        console.error(`Error leaving the meet channel: ${error.message}`);
-      }
-    };
-  }, [unPublishCamera, unPublishDim, unPublishScreen]);
+    chatRoomIdRef.current = chatRoomId;
+  }, [chatRoomId]);
+
+  useEffect(() => {
+    isHostRef.current = isHost;
+  }, [isHost]);
+
+  useEffect(() => {
+    meetingRef.current = meeting;
+  }, [meeting]);
+
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
 
   if (!meetingId) {
-    navigate("/new-meet", { replace: true });
     notification.error({ message: "Invalid meet link" });
+    navigate("/new-meet", { replace: true });
     return null;
   }
 
@@ -1150,14 +1446,239 @@ export default function VirtualSupportView({
   }
 
   return (
-    <Row className="virtual-support" gutter={[30, 15]} justify="center">
-      <Col xs={24} md={24} xl={hideSider ? 22 : 17}>
+    <Row className="virtual-support" gutter={[32, 32]} justify="center">
+      <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
+        <Row wrap={false} className="h-100">
+          <Col
+            flex={hideSide && 1}
+            className="virtual-support-nav-sider-holder"
+          >
+            <div
+              className="virtual-support-nav-sider"
+              style={{ borderRadius: hideSide && "30px" }}
+            >
+              <Row justify="start" align="middle" wrap={false}>
+                <Col>
+                  <Row justify="center">
+                    <Image
+                      preview={false}
+                      width={32}
+                      height={21}
+                      src={logo}
+                      className="clickable"
+                      onClick={() => setHideSide(false)}
+                    />
+                  </Row>
+                </Col>
+
+                <Col className="virtual-support-nav-sider-btns-wraper">
+                  <Row
+                    justify="space-between"
+                    align="middle"
+                    gutter={[
+                      { xs: 20, lg: 0 },
+                      { xs: 0, lg: 40 },
+                    ]}
+                    className="virtual-support-nav-sider-btns"
+                  >
+                    {/* For All users */}
+                    {[
+                      {
+                        id: "participant",
+                        title: "Participants",
+                        icon: ParticipantsSVG,
+                      },
+                      { id: "chat", title: "Chat", icon: SMSSVG },
+                    ].map((item) => (
+                      <Col key={item.id}>
+                        <Row
+                          justify="center"
+                          className={
+                            activeBtn === item.id && "sider-active-btn"
+                          }
+                        >
+                          <Tooltip title={item.title}>
+                            <item.icon
+                              className="clickable"
+                              onClick={() => {
+                                setHideSide(false);
+                                setActiveBtn(item.id);
+                              }}
+                            />
+                          </Tooltip>
+                        </Row>
+                      </Col>
+                    ))}
+
+                    {/* Not Host User Only */}
+                    {!isHost && (
+                      <>
+                        <Col>
+                          <Row
+                            justify="center"
+                            className={
+                              activeBtn === "myCart" && "sider-active-btn"
+                            }
+                          >
+                            <Tooltip title="My Cart">
+                              <ShoppingCartSVG
+                                className="clickable"
+                                style={{ width: "22px", height: "22px" }}
+                                color={"#c7c7cc"}
+                                onClick={() => {
+                                  setHideSide(false);
+                                  setActiveBtn("myCart");
+                                }}
+                              />
+                            </Tooltip>
+                          </Row>
+                        </Col>
+
+                        <Col>
+                          <Row
+                            justify="center"
+                            className={
+                              activeBtn === "sharedFiles" && "sider-active-btn"
+                            }
+                          >
+                            <Tooltip title="Shared Files">
+                              <FileSVG
+                                className="clickable"
+                                style={{ width: "22px", height: "22px" }}
+                                color={"#c7c7cc"}
+                                onClick={() => {
+                                  setHideSide(false);
+                                  setActiveBtn("sharedFiles");
+                                }}
+                              />
+                            </Tooltip>
+                          </Row>
+                        </Col>
+                      </>
+                    )}
+
+                    {/* Host User Only */}
+                    {isHost && (
+                      <>
+                        {[
+                          {
+                            id: "inventory",
+                            title: "Inventory",
+                            icon: PackageSVG,
+                          },
+                          {
+                            id: "tools",
+                            title: "Sharing Tools",
+                            icon: ToolsSVG,
+                          },
+                          // { id: "counter", title: "Counter", icon: CounterSVG },
+                          {
+                            id: "holomeet",
+                            title: "Holomeet",
+                            image: hologram,
+                          },
+                        ].map((item) => (
+                          <Col key={item.id}>
+                            <Row
+                              justify="center"
+                              className={
+                                activeBtn === item.id && "sider-active-btn"
+                              }
+                            >
+                              <Tooltip title={item.title}>
+                                {item.icon ? (
+                                  <item.icon
+                                    className="clickable"
+                                    onClick={() => {
+                                      setHideSide(false);
+                                      setActiveBtn(item.id);
+                                    }}
+                                  />
+                                ) : (
+                                  <Image
+                                    className="clickable"
+                                    preview={false}
+                                    width={24}
+                                    height={24}
+                                    src={item.image}
+                                    onClick={() => {
+                                      setHideSide(false);
+                                      setActiveBtn(item.id);
+                                    }}
+                                  />
+                                )}
+                              </Tooltip>
+                            </Row>
+                          </Col>
+                        ))}
+                      </>
+                    )}
+                  </Row>
+                </Col>
+
+                <Col className="virtual-support-avatar">
+                  <Avatar
+                    src={user.profileImage}
+                    size={40}
+                    style={{ objectFit: "cover" }}
+                  />
+                </Col>
+              </Row>
+            </div>
+          </Col>
+          {!hideSide && (
+            <Col flex={1} className="virtual-support-aside-hide">
+              <div className="virtual-support-aside">
+                <MeetAsaider
+                  isHost={isHost}
+                  chatLoading={!chatRoomId}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  activeBtn={activeBtn}
+                  setActiveBtn={setActiveBtn}
+                  SystemMessage={SystemMessage}
+                  shareWhiteboard={shareWhiteboard}
+                  permissions={permissions}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharedDimId={sharedDimId}
+                  sharingDimId={sharingDimId}
+                  unPublishScreen={unPublishScreen}
+                  publishScreen={publishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  setHideSide={setHideSide}
+                  fastboard={fastboard}
+                />
+              </div>
+            </Col>
+          )}
+        </Row>
+      </Col>
+
+      <Col
+        {...(hideSide
+          ? { flex: 1 }
+          : {
+              xs: 24,
+              md: 24,
+              xl: hideSide ? 22 : 16,
+              xxl: hideSide ? 22 : 16,
+            })}
+      >
         <Row justify="center" gutter={[0, 20]} style={{ height: "100%" }}>
           <Col xs={24} className="virtual-support-main">
             <Row
               align="middle"
               justify="space-between"
-              style={{ marginBottom: "1rem" }}
+              style={{
+                marginBottom: "1rem",
+                borderBottom: "1px solid #E5E5EAD9",
+                padding: "24px 0",
+              }}
             >
               <Typography.Text className="fz-18 fw-600">
                 Virtual Support
@@ -1173,7 +1694,7 @@ export default function VirtualSupportView({
                     <Row align="middle">
                       <ParticipantsSVG
                         style={{ width: "16px", height: "16px" }}
-                        color="#44c9ff"
+                        color="#0129B7"
                       />
                     </Row>
                   </Col>
@@ -1234,10 +1755,15 @@ export default function VirtualSupportView({
                 SystemMessage={SystemMessage}
                 unPublishDim={unPublishDim}
                 sharingDim={!!sharingDimId}
+                sharingFile={!!sharingFile}
+                sharingWhiteboard={!!fastboard}
                 isHost={isHost}
                 joinedSharedDim={joinedSharedDim}
                 setJoinedSharedDim={setJoinedSharedDim}
                 sharedDimId={sharedDimId}
+                permissions={permissions}
+                setPermissions={setPermissions}
+                setActiveBtn={setActiveBtn}
               />
             ) : !!sharingDimId ? (
               <MeetingScreen
@@ -1258,10 +1784,72 @@ export default function VirtualSupportView({
                 SystemMessage={SystemMessage}
                 unPublishDim={unPublishDim}
                 sharingDim={!!sharingDimId}
+                sharingFile={!!sharingFile}
+                sharingWhiteboard={!!fastboard}
                 isHost={isHost}
                 joinedSharedDim={joinedSharedDim}
                 setJoinedSharedDim={setJoinedSharedDim}
                 sharedDimId={sharedDimId}
+                permissions={permissions}
+                setPermissions={setPermissions}
+              />
+            ) : !!sharingFile ? (
+              <MeetingScreen
+                isMain
+                key={`${sharingFile.id}_file`}
+                screen={sharingFileScreenObj}
+                setMainScreen={setMainScreen}
+                publishDim={publishDim}
+                audioMuted={audioMuted}
+                soundMuted={soundMuted}
+                cameraEnabled={localVideoTrack?.enabled}
+                toggleAudioMute={toggleAudioMute}
+                toggleVideo={toggleVideo}
+                toggleSoundMute={toggleSoundMute}
+                publishScreen={publishScreen}
+                unPublishScreen={unPublishScreen}
+                sharingScreen={localScreenTrack?.enabled}
+                SystemMessage={SystemMessage}
+                unPublishDim={unPublishDim}
+                sharingDim={!!sharingDimId}
+                sharingFile={!!sharingFile}
+                sharingWhiteboard={!!fastboard}
+                isHost={isHost}
+                joinedSharedDim={joinedSharedDim}
+                setJoinedSharedDim={setJoinedSharedDim}
+                sharedDimId={sharedDimId}
+                permissions={permissions}
+                setPermissions={setPermissions}
+                setActiveBtn={setActiveBtn}
+              />
+            ) : !!fastboard ? (
+              <MeetingScreen
+                isMain
+                key={`${sharedDimId}_whiteboard`}
+                screen={whiteboardScreenObj}
+                setMainScreen={setMainScreen}
+                publishDim={publishDim}
+                audioMuted={audioMuted}
+                soundMuted={soundMuted}
+                cameraEnabled={localVideoTrack?.enabled}
+                toggleAudioMute={toggleAudioMute}
+                toggleVideo={toggleVideo}
+                toggleSoundMute={toggleSoundMute}
+                publishScreen={publishScreen}
+                unPublishScreen={unPublishScreen}
+                sharingScreen={localScreenTrack?.enabled}
+                SystemMessage={SystemMessage}
+                unPublishDim={unPublishDim}
+                sharingDim={!!sharingDimId}
+                sharingFile={!!sharingFile}
+                sharingWhiteboard={!!fastboard}
+                isHost={isHost}
+                joinedSharedDim={joinedSharedDim}
+                setJoinedSharedDim={setJoinedSharedDim}
+                sharedDimId={sharedDimId}
+                permissions={permissions}
+                setPermissions={setPermissions}
+                setActiveBtn={setActiveBtn}
               />
             ) : (
               <MeetingScreen
@@ -1282,21 +1870,22 @@ export default function VirtualSupportView({
                 SystemMessage={SystemMessage}
                 unPublishDim={unPublishDim}
                 sharingDim={!!sharingDimId}
+                sharingFile={!!sharingFile}
+                sharingWhiteboard={!!fastboard}
                 isHost={isHost}
                 joinedSharedDim={joinedSharedDim}
                 setJoinedSharedDim={setJoinedSharedDim}
                 sharedDimId={sharedDimId}
+                permissions={permissions}
+                setPermissions={setPermissions}
+                setActiveBtn={setActiveBtn}
               />
             )}
           </Col>
         </Row>
       </Col>
 
-      <Col
-        xs={hideSider ? 0 : 24}
-        md={hideSider ? 0 : 24}
-        xl={hideSider ? 0 : 7}
-      >
+      <Col xs={24} xl={0}>
         <div className="virtual-support-aside">
           <MeetAsaider
             isHost={isHost}
@@ -1304,127 +1893,27 @@ export default function VirtualSupportView({
             messages={messages}
             sendMessage={sendMessage}
             participants={participants}
-            setHideSider={setHideSider}
             activeBtn={activeBtn}
             setActiveBtn={setActiveBtn}
-            setHoloModalOpen={setHoloModalOpen}
             SystemMessage={SystemMessage}
+            shareWhiteboard={shareWhiteboard}
+            permissions={permissions}
+            sharedFiles={sharedFiles}
+            setSharedFiles={setSharedFiles}
+            sharedDimId={sharedDimId}
+            sharingDimId={sharingDimId}
+            unPublishScreen={unPublishScreen}
+            publishScreen={publishScreen}
+            sharingScreen={localScreenTrack?.enabled}
+            sharingDim={!!sharingDimId}
+            sharingFile={!!sharingFile}
+            sharingWhiteboard={!!fastboard}
+            joinedSharedDim={joinedSharedDim}
+            setJoinedSharedDim={setJoinedSharedDim}
+            fastboard={fastboard}
           />
         </div>
       </Col>
-
-      <Col xs={hideSider ? 24 : 0} xl={hideSider ? 2 : 0}>
-        <div className="virtual-support-hide-sider">
-          <Row
-            gutter={[
-              { xs: 0, lg: 20 },
-              { xs: 0, lg: 50 },
-            ]}
-            justify="space-between"
-            align="middle"
-          >
-            <Col xs={0} xl={24}>
-              <Row justify="center">
-                <Image
-                  preview={false}
-                  src={logo}
-                  className="clickable"
-                  onClick={() => setHideSider(false)}
-                />
-              </Row>
-            </Col>
-
-            <Col xs={4} xl={24}>
-              <Row justify="center">
-                <Tooltip title="Participants">
-                  <ParticipantsSVG
-                    className="clickable"
-                    onClick={() => {
-                      setHideSider(false);
-                      setActiveBtn("participant");
-                    }}
-                  />
-                </Tooltip>
-              </Row>
-            </Col>
-
-            {isHost ? (
-              <Col xs={4} xl={24}>
-                <Row justify="center">
-                  <Tooltip title="Inventory">
-                    <PackageSVG
-                      className="clickable"
-                      onClick={() => {
-                        setHideSider(false);
-                        setActiveBtn("inventory");
-                      }}
-                    />
-                  </Tooltip>
-                </Row>
-              </Col>
-            ) : (
-              <Col xs={4} xl={24}>
-                <Row justify="center">
-                  <Tooltip title="My Cart">
-                    <ShoppingCartSVG
-                      className="clickable"
-                      style={{ width: "22px", height: "22px" }}
-                      color={"#8e8e93"}
-                      onClick={() => {
-                        setHideSider(false);
-                        setActiveBtn("myCart");
-                      }}
-                    />
-                  </Tooltip>
-                </Row>
-              </Col>
-            )}
-
-            <Col xs={4} xl={24}>
-              <Row justify="center">
-                <Tooltip title="Chat">
-                  <SMSSVG
-                    className="clickable"
-                    onClick={() => {
-                      setHideSider(false);
-                      setActiveBtn("chat");
-                    }}
-                  />
-                </Tooltip>
-              </Row>
-            </Col>
-
-            {isHost && (
-              <Col xs={4} xl={24}>
-                <Row justify="center">
-                  <Tooltip title="Holomeet">
-                    <Image
-                      className="clickable"
-                      preview={false}
-                      width={32}
-                      height={32}
-                      src={hologram}
-                      onClick={() => setHoloModalOpen((prev) => !prev)}
-                    />
-                  </Tooltip>
-                </Row>
-              </Col>
-            )}
-          </Row>
-        </div>
-      </Col>
-
-      <Modal
-        footer={null}
-        closable={false}
-        onCancel={() => setHoloModalOpen(false)}
-        open={holoModalOpen}
-        centered
-        mask={false}
-        className="holomeet-modal"
-      >
-        <Holomeet />
-      </Modal>
     </Row>
   );
 }

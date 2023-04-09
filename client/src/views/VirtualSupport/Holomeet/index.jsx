@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Col, Image, Row, Typography } from "antd";
 
 import EducationImg from "assets/images/Education.png";
@@ -8,7 +9,6 @@ import meetImg from "assets/images/startMeetBg.png";
 import { LeftArrowSVG } from "assets/jsx-svg";
 
 import "./styles.css";
-import { Link, useParams } from "react-router-dom";
 
 export default function Holomeet() {
   const [selectedCategory, setSelectedCategory] = useState();
@@ -16,23 +16,39 @@ export default function Holomeet() {
 
   return (
     <div className="holo-meet">
-      <Row gutter={[0, 32]} style={{ maxWidth: "900px" }}>
-        <Col xs={24}>
-          <Row justify="center">
-            <Typography.Text className="fz-16 fw-600 wc">
-              {selectedCategory
-                ? "Select Room To Start Holomeet"
-                : "Select Category"}
-            </Typography.Text>
-          </Row>
-        </Col>
-        <Col xs={24}>
-          {!selectedCategory ? (
+      {!selectedCategory && (
+        <Typography.Text className="fz-18 fw-500 ">Holomeet</Typography.Text>
+      )}
+      <div
+        className={selectedCategory ? "" : "center-items"}
+        style={{ height: "90%", marginTop: selectedCategory ? "2rem" : "1rem" }}
+      >
+        <Row gutter={[0, 32]}>
+          {!selectedCategory && (
+            <Col xs={24}>
+              <Row justify="center">
+                <Typography.Text className="fz-16 fw-500 ">
+                  Select Category
+                </Typography.Text>
+              </Row>
+            </Col>
+          )}
+          <Col xs={24}>
             <Row gutter={[16, 16]}>
               {categories.map((category) => (
-                <Col xs={24} lg={8} key={category.id}>
+                <Col
+                  xs={selectedCategory ? 8 : 24}
+                  xl={selectedCategory && 12}
+                  xxl={selectedCategory ? 8 : 24}
+                  key={category.id}
+                >
                   <div
                     className="holo-meet-category"
+                    style={{
+                      outline:
+                        selectedCategory === category.id && "1px solid #AEAEB2",
+                      padding: selectedCategory && "1rem",
+                    }}
                     onClick={() => {
                       setSelectedCategory(category.id);
                     }}
@@ -50,7 +66,11 @@ export default function Holomeet() {
                       </Col>
                       <Col xs={24}>
                         <Row justify="center">
-                          <Typography.Text className="fz-16 wc">
+                          <Typography.Text
+                            className="fz-16"
+                            ellipsis
+                            title={category.title}
+                          >
                             {category.title}
                           </Typography.Text>
                         </Row>
@@ -60,11 +80,11 @@ export default function Holomeet() {
                 </Col>
               ))}
             </Row>
-          ) : (
-            <HolomeetRooms meetingId={meetingId} />
-          )}
-        </Col>
-      </Row>
+
+            {selectedCategory && <HolomeetRooms meetingId={meetingId} />}
+          </Col>
+        </Row>
+      </div>
 
       {selectedCategory && (
         <div
@@ -74,11 +94,16 @@ export default function Holomeet() {
           <Row wrap={false} gutter={[6, 0]} align="middle">
             <Col>
               <Row align="middle">
-                <LeftArrowSVG style={{ width: "14px", height: "14px" }} />
+                <LeftArrowSVG
+                  color="#8E8E93"
+                  style={{ width: "14px", height: "14px" }}
+                />
               </Row>
             </Col>
             <Col>
-              <Typography.Text className="wc">Back</Typography.Text>
+              <Typography.Text style={{ color: "#8E8E93" }}>
+                Back
+              </Typography.Text>
             </Col>
           </Row>
         </div>
@@ -99,7 +124,7 @@ const HolomeetRooms = ({ type, meetingId }) => {
               "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
           })
           .map((room, index) => (
-            <Col xs={24} lg={8} key={index}>
+            <Col xs={24} key={index}>
               <Link to={`/metaverse/${meetingId}?holomeet=true`}>
                 <div className="holo-meet-room">
                   <Row gutter={[0, 8]}>
@@ -114,13 +139,13 @@ const HolomeetRooms = ({ type, meetingId }) => {
                     <Col xs={24}>
                       <Row gutter={[0, 4]}>
                         <Col xs={24}>
-                          <Typography.Text className="fz-16 fw-500 wc">
+                          <Typography.Text className="fz-16 fw-500">
                             {room.title}
                           </Typography.Text>
                         </Col>
                         <Col xs={24}>
                           <Typography.Paragraph
-                            className="fz-12 wc"
+                            className="fz-12"
                             ellipsis={{ rows: 2 }}
                           >
                             {room.description}

@@ -12,6 +12,7 @@ import {
 } from "antd";
 import AgoraRTC from "agora-rtc-sdk-ng";
 
+import userContext from "context/userContext";
 import {
   VoiceSVG,
   MuteVoiceSVG,
@@ -19,11 +20,10 @@ import {
   NoVideoSVG,
   ArrowDownSVG,
 } from "assets/jsx-svg";
-
 import joinBg from "assets/images/startMeetBg.png";
+import DragContext from "./DragContext";
 import VirtualSupportView from "./VirtualSupportView";
 import "./styles.css";
-import userContext from "context/userContext";
 
 export default function UserInteractionHOC() {
   const { user } = useContext(userContext);
@@ -38,6 +38,12 @@ export default function UserInteractionHOC() {
   const [micMuted, setMicMuted] = useState(false);
   const [camActive, setCamActive] = useState(false);
   const [settingsActive, setSettingsActive] = useState(false);
+  const [dragData, setDragData] = useState({
+    dragging: false,
+    dropText: "",
+    dimId: null,
+    file: null,
+  });
 
   const [form] = Form.useForm();
 
@@ -294,13 +300,15 @@ export default function UserInteractionHOC() {
     );
   } else {
     return (
-      <VirtualSupportView
-        micId={selectedMic}
-        camId={selectedCam}
-        playbackDeviceId={selectedPlaybackDevice}
-        startMicMuted={micMuted}
-        startCamActive={camActive}
-      />
+      <DragContext.Provider value={{ dragData, setDragData }}>
+        <VirtualSupportView
+          micId={selectedMic}
+          camId={selectedCam}
+          playbackDeviceId={selectedPlaybackDevice}
+          startMicMuted={micMuted}
+          startCamActive={camActive}
+        />
+      </DragContext.Provider>
     );
   }
 }

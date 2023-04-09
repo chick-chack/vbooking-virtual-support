@@ -1,16 +1,50 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Image, Row, Typography } from "antd";
+import { Avatar, Col, Row, Typography } from "antd";
+import { createUI } from "@netless/fastboard";
+import FileViewer from "react-file-viewer";
 
 import userContext from "context/userContext";
 import profileImg from "assets/images/avatar.png";
-import { MuteVoiceSVG, VoiceSVG } from "assets/jsx-svg";
+import {
+  MuteVoiceSVG,
+  VoiceSVG,
+  CloseSVG,
+  FullScreenImageSVG,
+} from "assets/jsx-svg";
 import MeetingCallControls from "../MeetingCallControls";
 
+import DragContext from "../DragContext";
 import "./style.css";
 
 const toAbsoluteUrl = (origin, pathname) =>
   origin + process.env.PUBLIC_URL + pathname;
+
+const getFileTypeFromMimeType = (mime) => {
+  if (mime.includes("pdf")) {
+    return "pdf";
+  } else if (mime.includes("jpg") || mime.includes("jpeg")) {
+    return "jpeg";
+  } else if (mime.includes("png")) {
+    return "png";
+  } else if (mime.includes("gif")) {
+    return "gif";
+  } else if (mime.includes("officedocument.wordprocessingml.document")) {
+    return "docx";
+  } else if (mime.includes("officedocument.spreadsheetml.sheet")) {
+    return "xlsx";
+  } else if (mime.includes("csv")) {
+    return "csv";
+  } else if (mime.includes("mp4")) {
+    return "mp4";
+  } else if (mime.includes("webm")) {
+    return "webm";
+  } else if (mime.includes("audio") && mime.includes("mpeg")) {
+    return "mp3";
+  } else {
+    return mime;
+  }
+};
 
 export default function MeetingScreen({
   screen,
@@ -23,7 +57,6 @@ export default function MeetingScreen({
   toggleAudioMute,
   toggleVideo,
   toggleSoundMute,
-  publishScreen,
   unPublishScreen,
   sharingScreen,
   SystemMessage,
@@ -33,14 +66,123 @@ export default function MeetingScreen({
   joinedSharedDim,
   setJoinedSharedDim,
   sharedDimId,
+  permissions,
+  setPermissions,
+  sharingFile,
+  setActiveBtn,
+  sharingWhiteboard,
 }) {
-  const [canvas, setCanvas] = useState();
-
+  const [unityCanvas, setUnityCanvas] = useState();
+  const [whiteboardContainer, setWhiteboardContainer] = useState();
   const [iframeRef, setIframeRef] = useState(null);
   const [controlSettingsShow, setControlSettingsShow] = useState(false);
-  const { user } = useContext(userContext);
+  const [mainFullScreen, setMainFullScreen] = useState(false);
 
-  const mountNode = iframeRef?.contentWindow?.document?.body;
+  const { user } = useContext(userContext);
+  const { dragData, setDragData } = useContext(DragContext);
+
+  const toggleFullScreen = () => setMainFullScreen((prev) => !prev);
+
+  const onDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      const dimId = dragData.dimId;
+      const file = dragData.file;
+
+      if (dimId) {
+        if (sharingScreen) {
+          unPublishScreen();
+        } else if (sharingWhiteboard) {
+          SystemMessage.stopWhiteboard();
+        } else if (sharingFile) {
+          SystemMessage.stopFilePreview();
+        }
+
+        SystemMessage.shareDim(dimId);
+      } else if (file) {
+        if (sharingScreen) {
+          unPublishScreen();
+        } else if (sharingWhiteboard) {
+          SystemMessage.stopWhiteboard();
+        } else if (sharingDim) {
+          SystemMessage.stopDim();
+        }
+
+        SystemMessage.shareFile(file);
+      }
+
+      setDragData({
+        dragging: false,
+        dropText: "",
+        dimId: null,
+        file: null,
+      });
+    },
+    [
+      SystemMessage,
+      dragData,
+      setDragData,
+      sharingDim,
+      sharingFile,
+      sharingScreen,
+      sharingWhiteboard,
+      unPublishScreen,
+    ],
+  );
+
+  const meetingControlsProps = useMemo(
+    () => ({
+      audioMuted: audioMuted,
+      soundMuted: soundMuted,
+      cameraEnabled: cameraEnabled,
+      toggleAudioMute: toggleAudioMute,
+      toggleVideo: toggleVideo,
+      toggleSoundMute: toggleSoundMute,
+      unPublishScreen: unPublishScreen,
+      sharingScreen: sharingScreen,
+      SystemMessage: SystemMessage,
+      unPublishDim: unPublishDim,
+      sharingDim: sharingDim,
+      isHost: isHost,
+      joinedSharedDim: joinedSharedDim,
+      setJoinedSharedDim: setJoinedSharedDim,
+      sharedDimId: sharedDimId,
+      userFullName: screen.userFullName,
+      controlSettingsShow: controlSettingsShow,
+      setControlSettingsShow: setControlSettingsShow,
+      permissions: permissions,
+      setPermissions: setPermissions,
+      setActiveBtn: setActiveBtn,
+      sharingWhiteboard: sharingWhiteboard,
+      sharingFile: sharingFile,
+      showArrow:
+        sharingDim || joinedSharedDim || sharingWhiteboard || sharingFile,
+    }),
+    [
+      SystemMessage,
+      audioMuted,
+      cameraEnabled,
+      controlSettingsShow,
+      isHost,
+      joinedSharedDim,
+      permissions,
+      screen.userFullName,
+      setActiveBtn,
+      setJoinedSharedDim,
+      setPermissions,
+      sharedDimId,
+      sharingDim,
+      sharingFile,
+      sharingScreen,
+      sharingWhiteboard,
+      soundMuted,
+      toggleAudioMute,
+      toggleSoundMute,
+      toggleVideo,
+      unPublishDim,
+      unPublishScreen,
+    ],
+  );
 
   useEffect(() => {
     if (iframeRef && screen.dimensionId && user.cGAccessToken) {
@@ -53,7 +195,7 @@ export default function MeetingScreen({
 
       const div = iframeRef.contentWindow.document.createElement("div");
       div.innerHTML =
-        "<div class='loading-holder'><video autoPlay muted loop class='video-loading'><source src='/new-WebGL/dimension.mp4' type='video/mp4'/></video></div>";
+        "<div style='width: 100%; height: 100%' class='loading-holder'><video autoPlay muted loop style='width: 100%; height: 100%; object-fit: contain;' class='video-loading'><source src='/new-WebGL/dimension.mp4' type='video/mp4'/></video></div>";
       div.id = "loading";
       div.className = "loading";
 
@@ -212,15 +354,24 @@ export default function MeetingScreen({
   }, [screen, iframeRef, user.cGAccessToken]);
 
   useEffect(() => {
-    if (screen.hasVideo) screen.playTrack();
-  }, [screen]);
+    if (screen.hasVideo) {
+      screen.playTrack();
+    } else if (sharingWhiteboard && screen.room && whiteboardContainer) {
+      createUI(screen.room, whiteboardContainer);
+    }
+  }, [sharingWhiteboard, screen, whiteboardContainer]);
 
   useEffect(() => {
-    if (sharingDim && canvas && typeof publishDim === "function") {
-      publishDim(canvas);
+    if (sharingDim && unityCanvas && typeof publishDim === "function") {
+      publishDim(unityCanvas);
+    }
+  }, [unityCanvas, publishDim, sharingDim]);
+
+  useEffect(() => {
+    if (sharingDim || joinedSharedDim || sharingWhiteboard || sharingFile) {
       setControlSettingsShow(true);
     }
-  }, [canvas, publishDim, sharingDim]);
+  }, [joinedSharedDim, sharingDim, sharingWhiteboard, sharingFile]);
 
   if (!screen) {
     return null;
@@ -229,6 +380,16 @@ export default function MeetingScreen({
   if (screen.type === "dim") {
     return (
       <section className="main-screen">
+        {dragData.dragging && (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDrop}
+            className="dragover-overlay"
+          >
+            {dragData.dropText}
+          </div>
+        )}
+
         <iframe
           style={{
             width: "100%",
@@ -238,7 +399,7 @@ export default function MeetingScreen({
           title="Explore Metaverse"
           ref={setIframeRef}
         >
-          {mountNode &&
+          {iframeRef?.contentWindow?.document?.body &&
             createPortal(
               <>
                 <div id="unity-container">
@@ -250,12 +411,12 @@ export default function MeetingScreen({
                         className="rpm-frame"
                         allow="camera *; microphone *"
                       ></iframe>
-                      <button id="rpm-hide-button" onclick="hideRpm()">
+                      <button id="rpm-hide-button" onClick="hideRpm()">
                         Hide
                       </button>
                     </div>
                     <canvas
-                      ref={(r) => setCanvas(r)}
+                      ref={setUnityCanvas}
                       id="unity-canvas"
                       style={{
                         width: "100%",
@@ -277,7 +438,7 @@ export default function MeetingScreen({
                   style={{ display: "none" }}
                 ></canvas>
               </>,
-              mountNode,
+              iframeRef?.contentWindow?.document?.body,
             )}
         </iframe>
 
@@ -285,34 +446,155 @@ export default function MeetingScreen({
           className="main-screen-controls"
           style={{
             bottom: controlSettingsShow ? "-55px" : "0px",
-            background: sharingDim || joinedSharedDim ? "inital" : "none",
-            boxShadow: sharingDim || joinedSharedDim ? "inital" : "none",
-            backdropFilter: sharingDim || joinedSharedDim ? "inital" : "none",
+            background: "inital",
+            boxShadow: "inital",
+            backdropFilter: "inital",
           }}
         >
-          <MeetingCallControls
-            audioMuted={audioMuted}
-            soundMuted={soundMuted}
-            cameraEnabled={cameraEnabled}
-            toggleAudioMute={toggleAudioMute}
-            toggleVideo={toggleVideo}
-            toggleSoundMute={toggleSoundMute}
-            publishScreen={publishScreen}
-            unPublishScreen={unPublishScreen}
-            sharingScreen={sharingScreen}
-            SystemMessage={SystemMessage}
-            unPublishDim={unPublishDim}
-            sharingDim={sharingDim}
-            isHost={isHost}
-            joinedSharedDim={joinedSharedDim}
-            setJoinedSharedDim={setJoinedSharedDim}
-            sharedDimId={sharedDimId}
-            userFullName={screen.userFullName}
-            controlSettingsShow={controlSettingsShow}
-            setControlSettingsShow={setControlSettingsShow}
-          />
+          <MeetingCallControls {...meetingControlsProps} />
         </div>
       </section>
+    );
+  } else if (screen.type === "file") {
+    return (
+      <Row
+        className={
+          mainFullScreen ? "main-screen-full" : "main-screen file-screen"
+        }
+      >
+        {dragData.dragging && (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDrop}
+            className="dragover-overlay"
+          >
+            {dragData.dropText}
+          </div>
+        )}
+
+        <div className="whiteboard-top">
+          <Row justify="space-between" align="middle">
+            <Col>
+              <div
+                className="whiteboard-close clickable"
+                onClick={toggleFullScreen}
+              >
+                <FullScreenImageSVG
+                  color="#fff"
+                  style={{ width: "12px", height: "12px" }}
+                  className="close-whiteboard"
+                />
+              </div>
+            </Col>
+            <Col>
+              {isHost && (
+                <div
+                  className="whiteboard-close clickable"
+                  onClick={SystemMessage.stopFilePreview}
+                >
+                  <CloseSVG
+                    color="#fff"
+                    style={{ width: "12px", height: "12px" }}
+                    className="close-whiteboard"
+                  />
+                </div>
+              )}
+            </Col>
+          </Row>
+        </div>
+
+        <div className="file-canvas">
+          {screen.file.isGoogleDrive ? (
+            <iframe
+              title="Google Drive Embed"
+              style={{ width: "100%", height: "100%" }}
+              src={screen.file.embedUrl}
+            />
+          ) : (
+            <FileViewer
+              fileType={getFileTypeFromMimeType(screen.file.type)}
+              filePath={screen.file.url}
+              errorComponent={<h1>Error previewing the file</h1>}
+              onError={(err) => console.log("FileViewer error:", err)}
+            />
+          )}
+        </div>
+
+        <div
+          className="main-screen-controls"
+          style={{
+            bottom: controlSettingsShow ? "-55px" : "0px",
+            background: "inital",
+            boxShadow: "inital",
+            backdropFilter: "inital",
+          }}
+        >
+          <MeetingCallControls {...meetingControlsProps} />
+        </div>
+      </Row>
+    );
+  } else if (screen.type === "whiteboard") {
+    return (
+      <Row
+        className={
+          mainFullScreen ? "main-screen-full" : "main-screen whiteboard-screen"
+        }
+      >
+        <div ref={setWhiteboardContainer} className="whiteboard-canvas"></div>
+
+        {dragData.dragging && (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDrop}
+            className="dragover-overlay"
+          >
+            {dragData.dropText}
+          </div>
+        )}
+
+        <div className="whiteboard-top">
+          <Row justify="space-between" align="middle">
+            <Col>
+              <div
+                className="whiteboard-close clickable"
+                onClick={toggleFullScreen}
+              >
+                <FullScreenImageSVG
+                  color="#fff"
+                  style={{ width: "12px", height: "12px" }}
+                  className="close-whiteboard"
+                />
+              </div>
+            </Col>
+            <Col>
+              {isHost && (
+                <div
+                  className="whiteboard-close clickable"
+                  onClick={SystemMessage.stopWhiteboard}
+                >
+                  <CloseSVG
+                    color="#fff"
+                    style={{ width: "12px", height: "12px" }}
+                    className="close-whiteboard"
+                  />
+                </div>
+              )}
+            </Col>
+          </Row>
+        </div>
+
+        <div
+          className="main-screen-controls"
+          style={{
+            bottom: controlSettingsShow ? "-55px" : "0px",
+            background: "inital",
+            boxShadow: "inital",
+            backdropFilter: "inital",
+          }}
+        >
+          <MeetingCallControls {...meetingControlsProps} />
+        </div>
+      </Row>
     );
   } else if (isMain) {
     return (
@@ -321,36 +603,26 @@ export default function MeetingScreen({
           <div id={screen.screenId} className="video-player"></div>
         )}
 
+        {dragData.dragging && (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDrop}
+            className="dragover-overlay"
+          >
+            {dragData.dropText}
+          </div>
+        )}
+
         <div
           className="main-screen-controls"
           style={{
-            bottom: controlSettingsShow ? "-55px" : "0px",
-            background: sharingDim || joinedSharedDim ? "inital" : "none",
-            boxShadow: sharingDim || joinedSharedDim ? "inital" : "none",
-            backdropFilter: sharingDim || joinedSharedDim ? "inital" : "none",
+            bottom: "0px",
+            background: "none",
+            boxShadow: "none",
+            backdropFilter: "none",
           }}
         >
-          <MeetingCallControls
-            audioMuted={audioMuted}
-            soundMuted={soundMuted}
-            cameraEnabled={cameraEnabled}
-            toggleAudioMute={toggleAudioMute}
-            toggleVideo={toggleVideo}
-            toggleSoundMute={toggleSoundMute}
-            publishScreen={publishScreen}
-            unPublishScreen={unPublishScreen}
-            sharingScreen={sharingScreen}
-            SystemMessage={SystemMessage}
-            unPublishDim={unPublishDim}
-            sharingDim={sharingDim}
-            isHost={isHost}
-            joinedSharedDim={joinedSharedDim}
-            setJoinedSharedDim={setJoinedSharedDim}
-            sharedDimId={sharedDimId}
-            userFullName={screen.userFullName}
-            controlSettingsShow={controlSettingsShow}
-            setControlSettingsShow={setControlSettingsShow}
-          />
+          <MeetingCallControls {...meetingControlsProps} />
         </div>
 
         {screen.type === "rtc" && (
@@ -371,13 +643,10 @@ export default function MeetingScreen({
 
         {!screen.hasVideo && (
           <div className="main-screen-img">
-            <Image
-              style={{ borderRadius: "50%", objectFit: "cover" }}
-              preview={false}
-              alt="profile pic"
+            <Avatar
+              size={140}
               src={screen.userProfileImage || profileImg}
-              width={140}
-              height={140}
+              style={{ objectFit: "cover" }}
             />
           </div>
         )}
@@ -417,13 +686,10 @@ export default function MeetingScreen({
 
         {!screen.hasVideo && (
           <div className="friend-screen-img">
-            <Image
-              style={{ borderRadius: "50%" }}
-              preview={false}
-              alt="profile pic"
+            <Avatar
+              size={50}
               src={screen.userProfileImage || profileImg}
-              width={50}
-              height={50}
+              style={{ objectFit: "cover" }}
             />
           </div>
         )}

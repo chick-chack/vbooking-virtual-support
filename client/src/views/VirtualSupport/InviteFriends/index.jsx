@@ -23,8 +23,6 @@ export default function InviteFriends() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  console.log(loading);
-
   const handleSearch = async (name) => {
     try {
       setLoading(true);
@@ -53,7 +51,6 @@ export default function InviteFriends() {
   }, [nameSearch]);
 
   const onFinish = (values) => {
-    console.log(values);
     if (values.users.length) {
       notification.success({ message: "Invitation send Succesfully ✔" });
       form.setFieldValue("users", undefined);

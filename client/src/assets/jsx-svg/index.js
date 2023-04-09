@@ -120,6 +120,14 @@ import SMSSVG from "./SMSSVG";
 import ToolsSVG from "./ToolsSVG";
 import WorldMapSVG from "./WorldMapSVG";
 import WhiteBoardSVG from "./WhiteBoardSVG";
+import ReactionSVG from "./ReactionSVG";
+import ReplySVG from "./ReplySVG";
+import AddReactionSVG from "./AddReactionSVG";
+import FileSVG from "./FileSVG";
+import CounterSVG from "./CounterSVG";
+import LikeStrokeSVG from "./LikeStrokeSVG";
+import FullScreenImageSVG from "./FullScreenImageSVG";
+
 import DestinationSVG from "./DestinationSVG";
 import BookingsExperienceSVG from "./BookingsExperienceSVG";
 import HotelsSVG from "./HotelsSVG";
@@ -251,11 +259,18 @@ export {
   ToolsSVG,
   WhiteBoardSVG,
   WorldMapSVG,
-  BookingsExperienceSVG,
+  ReactionSVG,
+  ReplySVG,
+  AddReactionSVG,
+  FileSVG,
+  CounterSVG,
+  LikeStrokeSVG,
+  FullScreenImageSVG,
   DestinationSVG,
+  BookingsExperienceSVG,
   HotelsSVG,
   FlightsSVG,
-  PersonSVG,
-  ExploreLocationSVG,
   CalculatorSVG,
+  ExploreLocationSVG,
+  PersonSVG,
 };
