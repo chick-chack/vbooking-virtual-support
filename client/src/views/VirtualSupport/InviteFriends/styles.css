@@ -14,3 +14,24 @@
   bottom: 16px;
   right: 16px;
 }
+
+.invite-friends .custome-checkbox-reversed .ant-checkbox-wrapper {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.invite-friends .custome-checkbox-reversed .ant-checkbox-wrapper::after {
+  display: none;
+}
+
+.invite-friends .custome-checkbox-reversed .ant-checkbox + span {
+  padding-inline-start: 0px;
+}
+
+.invite-friends
+  .custome-checkbox-reversed
+  .ant-checkbox-wrapper
+  + .ant-checkbox-wrapper {
+  margin-inline-start: 0px;
+}

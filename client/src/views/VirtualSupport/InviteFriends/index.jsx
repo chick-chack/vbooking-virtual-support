@@ -17,10 +17,11 @@ import ParticipantsService from "services/participants.service";
 
 import "./styles.css";
 
-export default function InviteFriends() {
+export default function InviteFriends({ setInviteParticipantsPopup }) {
   const [form] = Form.useForm();
   const [nameSearch, setNameSearch] = useState("");
   const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (name) => {
@@ -52,15 +53,17 @@ export default function InviteFriends() {
 
   const onFinish = (values) => {
     if (values.users.length) {
+      console.log(values.users);
       notification.success({ message: "Invitation send Succesfully ✔" });
       form.setFieldValue("users", undefined);
+      setInviteParticipantsPopup(false);
     }
   };
 
   return (
     <Form form={form} onFinish={onFinish} className="invite-friends">
       <Form.Item name="users" noStyle>
-        <Checkbox.Group>
+        <Checkbox.Group onChange={(e) => setSelectedUsers(e)}>
           <ConfigProvider
             theme={{
               token: {
@@ -107,19 +110,19 @@ export default function InviteFriends() {
                   </Row>
                 </Col>
               ) : (
-                <Col
-                  xs={24}
-                  style={{
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                    padding: "0rem 1rem",
-                  }}
-                >
-                  <Row gutter={[0, 12]}>
-                    {users?.map((user) => (
-                      <Col xs={24} key={user.id}>
-                        <Row align="middle">
-                          <Col flex={1}>
+                <>
+                  <Col
+                    xs={24}
+                    style={{
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      padding: "0rem 1rem",
+                    }}
+                  >
+                    <Row gutter={[0, 12]} className="custome-checkbox-reversed">
+                      {users?.map((user) => (
+                        <Checkbox value={user.id}>
+                          <Col xs={24} key={user.id}>
                             <Row align="middle" gutter={[12, 0]} wrap={false}>
                               <Col>
                                 <Avatar
@@ -135,34 +138,31 @@ export default function InviteFriends() {
                               </Col>
                             </Row>
                           </Col>
-                          <Col>
-                            <Checkbox value={user.id} />
-                          </Col>
-                        </Row>
-                      </Col>
-                    ))}
-
-                    <Col xs={24} style={{ height: "20px" }}></Col>
-                  </Row>
-                </Col>
+                        </Checkbox>
+                      ))}
+                    </Row>
+                  </Col>
+                  <Col xs={24} style={{ padding: "0 1rem" }}>
+                    <Row justify="end">
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        style={{
+                          borderRadius: "32px",
+                          height: "36px",
+                          padding: "0px 16px",
+                          fontWeight: "500",
+                          fontSize: "14px",
+                        }}
+                        disabled={!selectedUsers.length}
+                      >
+                        Send Invitation
+                      </Button>
+                    </Row>
+                  </Col>
+                </>
               )}
             </Row>
-
-            <sapn className="invite-friends-btn">
-              <Button
-                type="primary"
-                htmlType="submit"
-                style={{
-                  borderRadius: "32px",
-                  height: "36px",
-                  padding: "0px 16px",
-                  fontWeight: "500",
-                  fontSize: "14px",
-                }}
-              >
-                Send Invitation
-              </Button>
-            </sapn>
           </ConfigProvider>
         </Checkbox.Group>
       </Form.Item>

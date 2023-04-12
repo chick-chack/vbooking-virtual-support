@@ -1,0 +1,35 @@
+.production-tools .production-tools-screen,
+.production-tools .production-tools-media {
+  width: 100%;
+  aspect-ratio: 1;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 4px solid #eee;
+}
+
+.production-tools .production-tools-media {
+  border: 2px solid #eee;
+}
+
+.production-tools .production-tools-media:hover {
+  background: #eee;
+  cursor: grab;
+}
+
+.production-tools .dragover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 201;
+  font-weight: 600;
+  font-size: 30px;
+  color: #fff;
+}

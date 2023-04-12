@@ -127,7 +127,10 @@ import FileSVG from "./FileSVG";
 import CounterSVG from "./CounterSVG";
 import LikeStrokeSVG from "./LikeStrokeSVG";
 import FullScreenImageSVG from "./FullScreenImageSVG";
-
+import PluseSVG from "./PluseSVG";
+import CounterFileSVG from "./CounterFileSVG";
+import SignatureSVG from "./SignatureSVG";
+import FullNameSVG from "./FullNameSVG";
 import DestinationSVG from "./DestinationSVG";
 import BookingsExperienceSVG from "./BookingsExperienceSVG";
 import HotelsSVG from "./HotelsSVG";
@@ -266,6 +269,10 @@ export {
   CounterSVG,
   LikeStrokeSVG,
   FullScreenImageSVG,
+  PluseSVG,
+  CounterFileSVG,
+  SignatureSVG,
+  FullNameSVG,
   DestinationSVG,
   BookingsExperienceSVG,
   HotelsSVG,

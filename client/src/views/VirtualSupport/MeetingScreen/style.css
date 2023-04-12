@@ -123,6 +123,17 @@
   justify-content: center;
 }
 
+.virtual-support
+  .virtual-support-main
+  .pg-viewer-wrapper
+  .photo-viewer-container {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100% !important;
+}
+
 @media only screen and (max-width: 768px) {
   .virtual-support .virtual-support-main .main-screen-controls {
     bottom: 6px !important;

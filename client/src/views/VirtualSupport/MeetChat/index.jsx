@@ -45,88 +45,88 @@ export default function MeetChat({
   }
 
   return (
-    <Row
-      className="support-chat h-100"
-      style={{ margin: noMarign && "1rem 0rem" }}
-    >
-      <div className="meet-chat-panel">
-        <div className="chat-list">
-          {messages?.map((message, index) => (
-            <Row
-              key={index}
-              align="middle"
-              wrap={false}
-              style={{ flexDirection: message.owner && "row-reverse" }}
-            >
-              <Image
-                preview={false}
-                width={45}
-                height={45}
-                src={message.profileImage || profileImg}
-                style={{ borderRadius: "50%", objectFit: "cover" }}
-              />
+    <>
+      <Typography.Text className="fz-18 fw-500">Chat</Typography.Text>
+      <Row className="support-chat" style={{ margin: noMarign && "24px 0rem" }}>
+        <div className="meet-chat-panel">
+          <div className="chat-list">
+            {messages?.map((message, index) => (
               <Row
-                className="chat-message"
-                style={{
-                  marginInlineEnd: message.owner && "0.5rem",
-                  borderRadius: message.owner && "15px 3px 15px 15px",
-                }}
+                key={index}
+                align="middle"
+                wrap={false}
+                style={{ flexDirection: message.owner && "row-reverse" }}
               >
-                <Col xs={24}>
-                  <Row justify={message.owner ? "end" : "start"}>
-                    <Typography.Text className="fz-12 fw-600">
-                      {message.name}
-                    </Typography.Text>
-                  </Row>
-                </Col>
-                <Col xs={24}>
-                  <Row justify={message.owner ? "end" : "start"}>
-                    <Typography.Text className="fw-400">
-                      {message.msg}
-                    </Typography.Text>
-                  </Row>
-                </Col>
-              </Row>
-            </Row>
-          ))}
-          <span
-            ref={messageListEndRef}
-            style={{
-              minHeight: "1px",
-              overflowAnchor: "auto",
-              scrollMarginBottom: "50px",
-            }}
-          />
-        </div>
-
-        <Form form={form} onFinish={onFinish}>
-          <Row align="middle" justify="space-between" wrap={false}>
-            <Col flex={1} className="mr-1">
-              <Form.Item name="message">
-                <Input
-                  className="message-input"
-                  prefix={<PaperclipSVG />}
-                  placeholder="Message.."
-                  disabled={!isHost && !permissions.chat}
+                <Image
+                  preview={false}
+                  width={45}
+                  height={45}
+                  src={message.profileImage || profileImg}
+                  style={{ borderRadius: "50%", objectFit: "cover" }}
                 />
-              </Form.Item>
-            </Col>
-
-            <Col>
-              <Form.Item>
-                <Button
-                  type="primary"
-                  shape="circle"
-                  className="center-items"
-                  htmlType="submit"
+                <div
+                  className="chat-message"
+                  style={{
+                    marginInlineEnd: message.owner && "0.5rem",
+                    borderRadius: message.owner && "15px 3px 15px 15px",
+                  }}
                 >
-                  <SendSVG style={{ width: "18px", height: "18px" }} />
-                </Button>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
-    </Row>
+                  <div>
+                    <Row justify={message.owner ? "end" : "start"}>
+                      <Typography.Text className="fz-12 fw-600">
+                        {message.name}
+                      </Typography.Text>
+                    </Row>
+                  </div>
+                  <div>
+                    <Row justify={message.owner ? "end" : "start"}>
+                      <Typography.Text className="fw-400">
+                        {message.msg}
+                      </Typography.Text>
+                    </Row>
+                  </div>
+                </div>
+              </Row>
+            ))}
+            <span
+              ref={messageListEndRef}
+              style={{
+                minHeight: "1px",
+                overflowAnchor: "auto",
+                scrollMarginBottom: "50px",
+              }}
+            />
+          </div>
+
+          <Form form={form} onFinish={onFinish}>
+            <Row align="middle" justify="space-between" wrap={false}>
+              <Col flex={1} className="mr-1">
+                <Form.Item name="message">
+                  <Input
+                    className="message-input"
+                    prefix={<PaperclipSVG />}
+                    placeholder="Message.."
+                    disabled={!isHost && !permissions.chat}
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col>
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    shape="circle"
+                    className="center-items"
+                    htmlType="submit"
+                  >
+                    <SendSVG style={{ width: "18px", height: "18px" }} />
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </div>
+      </Row>
+    </>
   );
 }

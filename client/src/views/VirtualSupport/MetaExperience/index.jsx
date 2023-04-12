@@ -104,6 +104,13 @@ export default function MetaExperience({
                 }
               >
                 <div
+                  style={{
+                    border: +sharingDimId === +dim.id && "2px solid #0000",
+                    background:
+                      +sharingDimId === +dim.id &&
+                      `linear-gradient(#ffffff, #ffffff) padding-box,
+                      linear-gradient(270deg, #960bcd 0%, #44c9ff 100%)`,
+                  }}
                   className="dim-card"
                   onClick={() => {
                     if (sharingScreen) {

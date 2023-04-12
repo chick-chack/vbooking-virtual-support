@@ -265,7 +265,7 @@
   position: relative;
   z-index: 1;
   border-radius: 8px;
-  background: transparent linear-gradient(244deg, #64adae 0%, #8dc55c 100%) 0%
+  background: transparent linear-gradient(244deg, #960bcd 0%, #44c9ff 100%) 0%
     0% no-repeat padding-box;
   background-color: #fff;
   cursor: pointer;
@@ -296,7 +296,7 @@
 }
 
 .gradiant-border-btn:hover::before {
-  opacity: 80%;
+  opacity: 0%;
   top: 0px;
   right: 0px;
   bottom: 0px;

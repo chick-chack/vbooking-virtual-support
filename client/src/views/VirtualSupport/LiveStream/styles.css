@@ -1,0 +1,18 @@
+.live-stream-section .live-stream-cam {
+  width: 100%;
+  aspect-ratio: 1.6;
+  border: 3px solid transparent;
+}
+
+.live-stream-section .live-stream-btn {
+  background: transparent;
+  border: 2px solid #000;
+  padding: 0px 14px;
+}
+
+.live-stream-section .live-stream-btn-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #000;
+}

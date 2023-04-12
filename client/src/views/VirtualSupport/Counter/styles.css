@@ -1,0 +1,68 @@
+.counter-section {
+  flex-direction: column;
+}
+
+.counter-section .counter-btn {
+  border: none;
+  background: #fff;
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  padding: 12px 32px;
+  width: 100%;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.counter-section .counter-gradiant-btn::before {
+  background-color: #f9f9fb;
+  border-radius: 10px;
+}
+
+.counter-section .counter-btn:hover .ant-typography {
+  color: #5c9937;
+}
+
+.counter-section .counter-btn:hover svg {
+  fill: #5c9937;
+}
+
+.counter-section .counter-btn-active {
+  border: 1px solid #5c9937;
+}
+
+.counter-section .counter-btn-active .ant-typography {
+  color: #5c9937;
+}
+.counter-section .counter-btn-active svg {
+  fill: #5c9937;
+}
+
+.counter-search-input .ant-input-affix-wrapper {
+  padding-inline: 6px !important;
+}
+
+.counter-search-input .ant-input {
+  padding: 9px 4px !important;
+}
+
+.custome-checkbox-reversed {
+  width: 100%;
+}
+
+.custome-checkbox-reversed .ant-checkbox-wrapper {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.custome-checkbox-reversed .ant-checkbox-wrapper::after {
+  display: none;
+}
+
+.custome-checkbox-reversed .ant-checkbox + span {
+  padding-inline-start: 0px;
+}
+
+.custome-checkbox-reversed .ant-checkbox-wrapper + .ant-checkbox-wrapper {
+  margin-inline-start: 0px;
+}

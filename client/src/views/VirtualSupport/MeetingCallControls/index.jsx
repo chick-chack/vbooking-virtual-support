@@ -5,9 +5,7 @@ import {
   Col,
   Dropdown,
   Image,
-  Menu,
   Modal,
-  // notification,
   Row,
   Tooltip,
   Typography,
@@ -16,17 +14,13 @@ import {
 import {
   ArrowDownSVG,
   CallEndSVG,
-  GroupsSVG,
   MuteVoiceSVG,
   NoSoundSVG,
   NoVideoSVG,
-  ScreenSVG,
   SettingFillSVG,
-  // ShareDimenstionSVG,
   SoundSVG,
   VideoSVG,
   VoiceSVG,
-  WebViewSVG,
 } from "assets/jsx-svg";
 import MetaverseService from "services/metaverse.service";
 import "./styles.css";
@@ -196,51 +190,51 @@ export default function MeetingCallControls({
     [navigate, SystemMessage],
   );
 
-  const endCurrentShareLabel = useMemo(() => {
-    let onClick;
-    let text;
+  // const endCurrentShareLabel = useMemo(() => {
+  //   let onClick;
+  //   let text;
 
-    if (sharingScreen) {
-      onClick = unPublishScreen;
-      text = "Stop Screen Share";
-    } else if (sharingDim) {
-      onClick = SystemMessage.stopDim;
-      text = "Stop Dimension Share";
-    } else if (sharingWhiteboard) {
-      onClick = SystemMessage.stopWhiteboard;
-      text = "Stop Whiteboard Share";
-    } else if (sharingFile) {
-      onClick = SystemMessage.stopFilePreview;
-      text = "Stop File Share";
-    } else {
-      return null;
-    }
+  //   if (sharingScreen) {
+  //     onClick = unPublishScreen;
+  //     text = "Stop Screen Share";
+  //   } else if (sharingDim) {
+  //     onClick = SystemMessage.stopDim;
+  //     text = "Stop Dimension Share";
+  //   } else if (sharingWhiteboard) {
+  //     onClick = SystemMessage.stopWhiteboard;
+  //     text = "Stop Whiteboard Share";
+  //   } else if (sharingFile) {
+  //     onClick = SystemMessage.stopFilePreview;
+  //     text = "Stop File Share";
+  //   } else {
+  //     return null;
+  //   }
 
-    return (
-      <Row align="middle" gutter={[8, 0]} wrap={false} onClick={onClick}>
-        <Col>
-          <Row align="middle">
-            <ScreenSVG color="#fff" style={{ width: "16px", height: "16px" }} />
-          </Row>
-        </Col>
-        <Col>
-          <Typography.Text className="fz-16 wc fw-300">{text}</Typography.Text>
-        </Col>
-      </Row>
-    );
-  }, [
-    SystemMessage,
-    sharingDim,
-    sharingFile,
-    sharingScreen,
-    sharingWhiteboard,
-    unPublishScreen,
-  ]);
+  //   return (
+  //     <Row align="middle" gutter={[8, 0]} wrap={false} onClick={onClick}>
+  //       <Col>
+  //         <Row align="middle">
+  //           <ScreenSVG color="#fff" style={{ width: "16px", height: "16px" }} />
+  //         </Row>
+  //       </Col>
+  //       <Col>
+  //         <Typography.Text className="fz-16 wc fw-300">{text}</Typography.Text>
+  //       </Col>
+  //     </Row>
+  //   );
+  // }, [
+  //   SystemMessage,
+  //   sharingDim,
+  //   sharingFile,
+  //   sharingScreen,
+  //   sharingWhiteboard,
+  //   unPublishScreen,
+  // ]);
 
   return (
     <>
       <Row
-        align={sharingDim || joinedSharedDim ? "middle" : "bottom"}
+        align={"bottom"}
         justify="space-between"
         style={{ padding: "10px 14px", position: "relative" }}
       >
@@ -259,25 +253,6 @@ export default function MeetingCallControls({
               }}
             />
           </span>
-        )}
-        {!!sharedDimId && (
-          <Col className="join-dim-btn">
-            <Button
-              type="primary"
-              onClick={() => setJoinedSharedDim(!joinedSharedDim)}
-            >
-              <Row gutter={[6, 0]} wrap={false} align="middle">
-                <Col>
-                  <Row align="middle">
-                    <GroupsSVG />
-                  </Row>
-                </Col>
-                <Col>
-                  {joinedSharedDim ? "Leave Dimension" : "Join Dimension"}
-                </Col>
-              </Row>
-            </Button>
-          </Col>
         )}
 
         <Col xs={0} md={3}>
@@ -314,7 +289,7 @@ export default function MeetingCallControls({
               </div>
             </Tooltip>
 
-            <Dropdown
+            {/* <Dropdown
               placement="top"
               trigger={["click"]}
               overlay={
@@ -362,14 +337,14 @@ export default function MeetingCallControls({
                 className="icon-wrapper"
                 style={{
                   background:
-                    "linear-gradient(270deg, #960bcd 0%, #44c9ff 100%)",
+                    "linear-gradient(270deg, #74b715 0%, #0129b7 100%)",
                   opacity: isHost ? "1" : "0.5",
                   pointerEvents: isHost ? "auto" : "none",
                 }}
               >
                 <ScreenSVG style={{ width: "20px", height: "20px" }} />
               </div>
-            </Dropdown>
+            </Dropdown> */}
 
             <Row
               wrap={false}

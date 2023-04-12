@@ -11,6 +11,7 @@ import {
   Avatar,
   Col,
   Dropdown,
+  Grid,
   Image,
   Menu,
   message,
@@ -28,6 +29,7 @@ import SocialEventService from "services/social-event.service";
 import CommonService from "services/common.service";
 import CustomSlider from "components/CustomSlider";
 import logo from "assets/images/logo.png";
+
 import hologram from "assets/images/3d-hologram.png";
 import {
   ParticipantsSVG,
@@ -38,78 +40,16 @@ import {
   SMSSVG,
   ToolsSVG,
   FileSVG,
+  CounterSVG,
+  ShareDimenstionSVG,
 } from "assets/jsx-svg";
 
 import MeetingScreen from "./MeetingScreen";
 import MeetAsaider from "./MeetAsaider";
 import InviteFriends from "./InviteFriends";
-import "./styles.css";
 import { LoadingOutlined } from "@ant-design/icons";
 
-const inviteMenu = (
-  <Menu
-    items={[
-      {
-        key: "1",
-        label: (
-          <Row align="middle" gutter={[6, 0]}>
-            <Col>
-              <Row align="middle">
-                <LinkSVG
-                  color="#fff"
-                  style={{ width: "11px", height: "11px" }}
-                />
-              </Row>
-            </Col>
-            <Col>
-              <Typography.Text className="fz-14 fw-400 wc">
-                Copy Meeting URL
-              </Typography.Text>
-            </Col>
-          </Row>
-        ),
-        onClick: () => {
-          message.info("Meeting URL Copied");
-          navigator.clipboard.writeText(window.location.href);
-        },
-      },
-      {
-        key: "2",
-        label: (
-          <Dropdown
-            placement="bottomRight"
-            trigger={["click"]}
-            dropdownRender={() => <InviteFriends />}
-            destroyPopupOnHide
-            getPopupContainer={() =>
-              document.getElementById("inviteParticipants")
-            }
-          >
-            <Row align="middle" gutter={[6, 0]}>
-              <Col>
-                <Row align="middle">
-                  <AddUserSVG style={{ width: "14px", height: "14px" }} />
-                </Row>
-              </Col>
-              <Col>
-                <Typography.Text className="fz-14 fw-400 wc">
-                  Invite Friend
-                </Typography.Text>
-              </Col>
-            </Row>
-          </Dropdown>
-        ),
-        className: "fz-14 fw-400 wc",
-      },
-    ]}
-    style={{
-      background: "rgba(0, 0, 0, 0.4)",
-      boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
-      backdropFilter: "blur(10px)",
-      color: "#fff",
-    }}
-  />
-);
+import "./styles.css";
 
 const slideResponsive = [
   {
@@ -167,11 +107,12 @@ export default function VirtualSupportView({
     screen: false,
     chat: true,
     mic: true,
-    cam: false,
-    whiteboard: false,
+    cam: true,
+    whiteboard: true,
     canDownload: true,
   });
   const [hideSide, setHideSide] = useState(false);
+  const [inviteParticipantsPopup, setInviteParticipantsPopup] = useState(false);
 
   const { user } = useContext(userContext);
   const joinTriesRef = useRef(1);
@@ -202,6 +143,8 @@ export default function VirtualSupportView({
       appKey: process.env.REACT_APP_AGORA_APP_KEY,
     }),
   );
+
+  const screenSize = Grid.useBreakpoint();
 
   const isHost = useMemo(
     () => meeting?.customerId === user.id,
@@ -1445,6 +1388,80 @@ export default function VirtualSupportView({
     );
   }
 
+  const inviteMenu = (
+    <Menu
+      items={[
+        {
+          key: "1",
+          label: (
+            <Row align="middle" gutter={[6, 0]}>
+              <Col>
+                <Row align="middle">
+                  <LinkSVG
+                    color="#fff"
+                    style={{ width: "11px", height: "11px" }}
+                  />
+                </Row>
+              </Col>
+              <Col>
+                <Typography.Text className="fz-14 fw-400 wc">
+                  Copy Meeting URL
+                </Typography.Text>
+              </Col>
+            </Row>
+          ),
+          onClick: () => {
+            message.info("Meeting URL Copied");
+            navigator.clipboard.writeText(window.location.href);
+          },
+        },
+        {
+          key: "2",
+          label: (
+            <Dropdown
+              placement="bottomRight"
+              trigger={["click"]}
+              open={inviteParticipantsPopup}
+              dropdownRender={() => (
+                <InviteFriends
+                  setInviteParticipantsPopup={setInviteParticipantsPopup}
+                />
+              )}
+              destroyPopupOnHide
+              getPopupContainer={() =>
+                document.getElementById("inviteParticipants")
+              }
+              onOpenChange={(e) => {
+                setInviteParticipantsPopup(e);
+              }}
+            >
+              <Row align="middle" gutter={[6, 0]}>
+                <Col>
+                  <Row align="middle">
+                    <AddUserSVG style={{ width: "14px", height: "14px" }} />
+                  </Row>
+                </Col>
+                <Col>
+                  <Typography.Text className="fz-14 fw-400 wc">
+                    Invite Friend
+                  </Typography.Text>
+                </Col>
+              </Row>
+            </Dropdown>
+          ),
+          className: "fz-14 fw-400 wc",
+          onClick: () => setInviteParticipantsPopup(true),
+        },
+      ]}
+      style={{
+        background: "rgba(0, 0, 0, 0.4)",
+        boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
+        backdropFilter: "blur(10px)",
+        color: "#fff",
+      }}
+    />
+  );
+
   return (
     <Row className="virtual-support" gutter={[32, 32]} justify="center">
       <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
@@ -1554,6 +1571,29 @@ export default function VirtualSupportView({
                             </Tooltip>
                           </Row>
                         </Col>
+
+                        {!!sharedDimId && (
+                          <Col>
+                            <Row
+                              justify="center"
+                              className={
+                                activeBtn === "sharingDim" && "sider-active-btn"
+                              }
+                            >
+                              <Tooltip title="Join Dimension">
+                                <ShareDimenstionSVG
+                                  className="clickable"
+                                  style={{ width: "22px", height: "22px" }}
+                                  color={"#c7c7cc"}
+                                  onClick={() => {
+                                    setHideSide(false);
+                                    setActiveBtn("sharingDim");
+                                  }}
+                                />
+                              </Tooltip>
+                            </Row>
+                          </Col>
+                        )}
                       </>
                     )}
 
@@ -1571,7 +1611,7 @@ export default function VirtualSupportView({
                             title: "Sharing Tools",
                             icon: ToolsSVG,
                           },
-                          // { id: "counter", title: "Counter", icon: CounterSVG },
+                          { id: "counter", title: "Counter", icon: CounterSVG },
                           {
                             id: "holomeet",
                             title: "Holomeet",
@@ -1626,7 +1666,7 @@ export default function VirtualSupportView({
               </Row>
             </div>
           </Col>
-          {!hideSide && (
+          {!hideSide && (screenSize.xl || screenSize.xxl) && (
             <Col flex={1} className="virtual-support-aside-hide">
               <div className="virtual-support-aside">
                 <MeetAsaider
@@ -1680,9 +1720,7 @@ export default function VirtualSupportView({
                 padding: "24px 0",
               }}
             >
-              <Typography.Text className="fz-18 fw-600">
-                Virtual Support
-              </Typography.Text>
+              <Typography.Text className="fz-18 fw-600">Vindo</Typography.Text>
               <Dropdown trigger={["click"]} overlay={inviteMenu}>
                 <Row
                   align="middle"
@@ -1885,35 +1923,37 @@ export default function VirtualSupportView({
         </Row>
       </Col>
 
-      <Col xs={24} xl={0}>
-        <div className="virtual-support-aside">
-          <MeetAsaider
-            isHost={isHost}
-            chatLoading={!chatRoomId}
-            messages={messages}
-            sendMessage={sendMessage}
-            participants={participants}
-            activeBtn={activeBtn}
-            setActiveBtn={setActiveBtn}
-            SystemMessage={SystemMessage}
-            shareWhiteboard={shareWhiteboard}
-            permissions={permissions}
-            sharedFiles={sharedFiles}
-            setSharedFiles={setSharedFiles}
-            sharedDimId={sharedDimId}
-            sharingDimId={sharingDimId}
-            unPublishScreen={unPublishScreen}
-            publishScreen={publishScreen}
-            sharingScreen={localScreenTrack?.enabled}
-            sharingDim={!!sharingDimId}
-            sharingFile={!!sharingFile}
-            sharingWhiteboard={!!fastboard}
-            joinedSharedDim={joinedSharedDim}
-            setJoinedSharedDim={setJoinedSharedDim}
-            fastboard={fastboard}
-          />
-        </div>
-      </Col>
+      {!screenSize.xl && (
+        <Col xs={24} xl={0}>
+          <div className="virtual-support-aside">
+            <MeetAsaider
+              isHost={isHost}
+              chatLoading={!chatRoomId}
+              messages={messages}
+              sendMessage={sendMessage}
+              participants={participants}
+              activeBtn={activeBtn}
+              setActiveBtn={setActiveBtn}
+              SystemMessage={SystemMessage}
+              shareWhiteboard={shareWhiteboard}
+              permissions={permissions}
+              sharedFiles={sharedFiles}
+              setSharedFiles={setSharedFiles}
+              sharedDimId={sharedDimId}
+              sharingDimId={sharingDimId}
+              unPublishScreen={unPublishScreen}
+              publishScreen={publishScreen}
+              sharingScreen={localScreenTrack?.enabled}
+              sharingDim={!!sharingDimId}
+              sharingFile={!!sharingFile}
+              sharingWhiteboard={!!fastboard}
+              joinedSharedDim={joinedSharedDim}
+              setJoinedSharedDim={setJoinedSharedDim}
+              fastboard={fastboard}
+            />
+          </div>
+        </Col>
+      )}
     </Row>
   );
 }

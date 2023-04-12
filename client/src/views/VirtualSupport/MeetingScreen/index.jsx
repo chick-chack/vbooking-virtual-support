@@ -156,7 +156,11 @@ export default function MeetingScreen({
       sharingWhiteboard: sharingWhiteboard,
       sharingFile: sharingFile,
       showArrow:
-        sharingDim || joinedSharedDim || sharingWhiteboard || sharingFile,
+        sharingDim ||
+        joinedSharedDim ||
+        sharingWhiteboard ||
+        sharingFile ||
+        sharingScreen,
     }),
     [
       SystemMessage,
@@ -368,10 +372,22 @@ export default function MeetingScreen({
   }, [unityCanvas, publishDim, sharingDim]);
 
   useEffect(() => {
-    if (sharingDim || joinedSharedDim || sharingWhiteboard || sharingFile) {
+    if (
+      sharingDim ||
+      joinedSharedDim ||
+      sharingWhiteboard ||
+      sharingFile ||
+      sharingScreen
+    ) {
       setControlSettingsShow(true);
     }
-  }, [joinedSharedDim, sharingDim, sharingWhiteboard, sharingFile]);
+  }, [
+    joinedSharedDim,
+    sharingDim,
+    sharingWhiteboard,
+    sharingFile,
+    sharingScreen,
+  ]);
 
   if (!screen) {
     return null;
@@ -379,7 +395,7 @@ export default function MeetingScreen({
 
   if (screen.type === "dim") {
     return (
-      <section className="main-screen">
+      <section className={mainFullScreen ? "main-screen-full" : "main-screen"}>
         {dragData.dragging && (
           <div
             onDragOver={(e) => e.preventDefault()}
@@ -389,6 +405,39 @@ export default function MeetingScreen({
             {dragData.dropText}
           </div>
         )}
+
+        <div className="whiteboard-top">
+          <Row justify="space-between" align="middle">
+            <Col>
+              <div
+                className="whiteboard-close clickable"
+                onClick={toggleFullScreen}
+              >
+                <FullScreenImageSVG
+                  color="#fff"
+                  style={{ width: "12px", height: "12px" }}
+                  className="close-whiteboard"
+                />
+              </div>
+            </Col>
+            <Col>
+              <div
+                className="whiteboard-close clickable"
+                onClick={() =>
+                  isHost
+                    ? SystemMessage.stopDim()
+                    : setJoinedSharedDim(!joinedSharedDim)
+                }
+              >
+                <CloseSVG
+                  color="#fff"
+                  style={{ width: "12px", height: "12px" }}
+                  className="close-whiteboard"
+                />
+              </div>
+            </Col>
+          </Row>
+        </div>
 
         <iframe
           style={{
@@ -598,9 +647,31 @@ export default function MeetingScreen({
     );
   } else if (isMain) {
     return (
-      <Row className="main-screen">
+      <Row className={"main-screen"}>
         {screen.hasVideo && (
           <div id={screen.screenId} className="video-player"></div>
+        )}
+
+        {sharingScreen && (
+          <div className="whiteboard-top">
+            <Row justify="space-between" align="middle">
+              <Col></Col>
+              <Col>
+                {isHost && (
+                  <div
+                    className="whiteboard-close clickable"
+                    onClick={() => unPublishScreen()}
+                  >
+                    <CloseSVG
+                      color="#fff"
+                      style={{ width: "12px", height: "12px" }}
+                      className="close-whiteboard"
+                    />
+                  </div>
+                )}
+              </Col>
+            </Row>
+          </div>
         )}
 
         {dragData.dragging && (
@@ -616,14 +687,23 @@ export default function MeetingScreen({
         <div
           className="main-screen-controls"
           style={{
-            bottom: "0px",
-            background: "none",
-            boxShadow: "none",
-            backdropFilter: "none",
+            bottom: sharingScreen && controlSettingsShow ? "-55px" : "0px",
+            background: sharingScreen ? "inital" : "none",
+            boxShadow: sharingScreen ? "inital" : "none",
+            backdropFilter: sharingScreen ? "inital" : "none",
           }}
         >
           <MeetingCallControls {...meetingControlsProps} />
         </div>
+        <div
+          className="main-screen-controls"
+          style={{
+            bottom: controlSettingsShow ? "-55px" : "0px",
+            background: "inital",
+            boxShadow: "inital",
+            backdropFilter: "inital",
+          }}
+        ></div>
 
         {screen.type === "rtc" && (
           <span className="friend-screen-sound">
