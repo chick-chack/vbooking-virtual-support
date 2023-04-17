@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Typography, Col, Row, Button, Image } from "antd";
+import { Typography, Col, Row, Button, Image, Form } from "antd";
 import { EyeInvisibleFilled } from "@ant-design/icons";
 
 import MeetingCallParticipants from "../MeetingCallParticipants";
@@ -17,11 +17,13 @@ import Counter from "../Counter";
 import CounterParticipants from "../Counter/CounterParticipants";
 import ProductionTools from "../ProductionTools";
 import LiveStream from "../LiveStream";
+import CounterForUser from "../Counter/CounterForUser";
 
 import { GroupsSVG } from "assets/jsx-svg";
 import AvatarMain from "assets/images/AvatarMain.png";
 
 import "./styles.css";
+import CounterSharedData from "../Counter/CounterSharedData";
 
 export default function MeetAsaider({
   isHost,
@@ -48,11 +50,16 @@ export default function MeetAsaider({
   joinedSharedDim,
   setJoinedSharedDim,
   fastboard,
+  setAskedForCounter,
+  counterFormData,
+  counterSharedData,
 }) {
   const [productSelected, setProductSelected] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [showParticipants, setShowParticipants] = useState(participants);
   const [selectedCam, setSelectedCam] = useState(null);
+  const [counterActiveBtn, setCounterActiveBtn] = useState(3);
+  const [counterForm] = Form.useForm();
 
   useMemo(() => {
     if (searchValue) {
@@ -119,12 +126,41 @@ export default function MeetAsaider({
           <YoutubeLink setActiveBtn={setActiveBtn} fastboard={fastboard} />
         )}
 
-        {activeBtn === "counter" && <Counter setActiveBtn={setActiveBtn} />}
+        {activeBtn === "counter" && (
+          <Counter
+            setActiveBtn={setActiveBtn}
+            SystemMessage={SystemMessage}
+            counterForm={counterForm}
+            counterActiveBtn={counterActiveBtn}
+            setCounterActiveBtn={setCounterActiveBtn}
+            setAskedForCounter={setAskedForCounter}
+          />
+        )}
+
+        {activeBtn === "userCounter" && (
+          <CounterForUser
+            SystemMessage={SystemMessage}
+            setActiveBtn={setActiveBtn}
+            setAskedForCounter={setAskedForCounter}
+            counterFormData={counterFormData}
+          />
+        )}
+
+        {activeBtn === "counterUserSharedData" && (
+          <CounterSharedData
+            setActiveBtn={setActiveBtn}
+            counterSharedData={counterSharedData}
+          />
+        )}
 
         {activeBtn === "counterParticipants" && (
           <CounterParticipants
             setActiveBtn={setActiveBtn}
             participants={participants}
+            counterForm={counterForm}
+            SystemMessage={SystemMessage}
+            counterActiveBtn={counterActiveBtn}
+            setAskedForCounter={setAskedForCounter}
           />
         )}
 

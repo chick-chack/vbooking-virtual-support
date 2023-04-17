@@ -29,7 +29,6 @@ import SocialEventService from "services/social-event.service";
 import CommonService from "services/common.service";
 import CustomSlider from "components/CustomSlider";
 import logo from "assets/images/logo.png";
-
 import hologram from "assets/images/3d-hologram.png";
 import {
   ParticipantsSVG,
@@ -42,6 +41,8 @@ import {
   FileSVG,
   CounterSVG,
   ShareDimenstionSVG,
+  AlbumsSVG,
+  VirtualMeetSVG,
 } from "assets/jsx-svg";
 
 import MeetingScreen from "./MeetingScreen";
@@ -113,6 +114,9 @@ export default function VirtualSupportView({
   });
   const [hideSide, setHideSide] = useState(false);
   const [inviteParticipantsPopup, setInviteParticipantsPopup] = useState(false);
+  const [askedForCounter, setAskedForCounter] = useState(false);
+  const [counterFormData, setCounterFormData] = useState(null);
+  const [counterSharedData, setCounterSharedData] = useState({});
 
   const { user } = useContext(userContext);
   const joinTriesRef = useRef(1);
@@ -541,6 +545,29 @@ export default function VirtualSupportView({
       changeSharedFiles: (files) =>
         sendMessage(formatSystemMsg(`SHAREDFILES%%%${JSON.stringify(files)}`)),
 
+      hostShareCounterData: (data) => {
+        sendMessage(
+          formatSystemMsg(`COUNTERHOSTSENDDATA%%%${JSON.stringify(data)}`),
+        );
+      },
+
+      changeCounterUserSharedData: ({
+        user,
+        fullName = "",
+        signature = null,
+        file = null,
+        customField = null,
+      }) =>
+        sendMessage(
+          formatSystemMsg(
+            `COUNTERUSERSENDDATA%%%${JSON.stringify(user)}%%%${JSON.stringify(
+              fullName,
+            )}%%%${JSON.stringify(signature)}%%%${JSON.stringify(
+              file,
+            )}%%%${JSON.stringify(customField)}`,
+          ),
+        ),
+
       stopFilePreview: () => {
         setSharingFile(null);
         sendMessage(formatSystemMsg("ENDFILEPREVIEW"));
@@ -568,6 +595,24 @@ export default function VirtualSupportView({
       },
 
       endMeeting: () => sendMessage(formatSystemMsg("ENDMEETING")),
+
+      askAllUserForCounter: (dataAskedFor) => {
+        sendMessage(
+          formatSystemMsg(
+            `ASKALLUSERFORCOUNTER%%%${JSON.stringify(dataAskedFor)}`,
+          ),
+        );
+      },
+
+      askSelectedUserForCounter: (usersAndDataAskedFor) => {
+        sendMessage(
+          formatSystemMsg(
+            `ASKELECTEDUSERSFORCOUNTER%%%${JSON.stringify(
+              usersAndDataAskedFor,
+            )}`,
+          ),
+        );
+      },
     };
   }, [sendMessage, unPublishDim]);
 
@@ -766,11 +811,6 @@ export default function VirtualSupportView({
           const perms = JSON.parse(msg.split("%%%")[2]);
           setPermissions(perms);
         } catch (ignored) {}
-      } else if (msg.includes("SHAREDFILES")) {
-        try {
-          const files = JSON.parse(msg.split("%%%")[2]);
-          setSharedFiles(files);
-        } catch (ignored) {}
       } else if (msg.includes("PREVIEWFILE")) {
         try {
           const file = JSON.parse(msg.split("%%%")[3]);
@@ -778,6 +818,86 @@ export default function VirtualSupportView({
           notification.info({
             message: "Host is sharing a file.",
           });
+        } catch (ignored) {}
+      } else if (msg.includes("ASKALLUSERFORCOUNTER")) {
+        try {
+          if (!isHost) {
+            const dataAskedFor = JSON.parse(msg.split("%%%")[2]);
+            setCounterFormData(dataAskedFor.formData);
+
+            participants.forEach((participant) => {
+              if (participant.uid === user.id) {
+                notification.info({
+                  message: `Host is asked you to submit ${dataAskedFor.formData.message}.`,
+                });
+                setAskedForCounter(true);
+                setActiveBtn("userCounter");
+              }
+            });
+          }
+        } catch (ignored) {}
+      } else if (msg.includes("ASKELECTEDUSERSFORCOUNTER")) {
+        try {
+          if (!isHost) {
+            const usersAndDataAskedFor = JSON.parse(msg.split("%%%")[2]);
+            setCounterFormData(usersAndDataAskedFor.formData);
+            if (usersAndDataAskedFor.users.includes(user.id)) {
+              notification.info({
+                message: `Host is asked you to submit ${usersAndDataAskedFor.formData.message}.`,
+              });
+              setAskedForCounter(true);
+              setActiveBtn("userCounter");
+            }
+          }
+        } catch (ignored) {}
+      } else if (msg.includes("COUNTERUSERSENDDATA")) {
+        try {
+          const senderUser = JSON.parse(msg.split("%%%")[2]);
+          const sharedFullName = JSON.parse(msg.split("%%%")[3]);
+          const sharedSignature = JSON.parse(msg.split("%%%")[4]);
+          const sharedfile = JSON.parse(msg.split("%%%")[5]);
+          const sharedCustomField = JSON.parse(msg.split("%%%")[6]);
+
+          setCounterSharedData((prev) => {
+            if (prev.hasOwnProperty(senderUser.id)) {
+              if (sharedFullName) {
+                prev[senderUser.id].fullName = sharedFullName;
+              }
+              if (sharedSignature) {
+                prev[senderUser.id].signature = sharedSignature;
+              }
+              if (sharedfile) {
+                prev[senderUser.id].files = [
+                  ...prev[senderUser.id].files,
+                  sharedfile,
+                ];
+              }
+
+              if (sharedCustomField) {
+                prev[senderUser.id].customField = [
+                  ...prev[senderUser.id].customField,
+                  sharedCustomField,
+                ];
+              }
+            } else {
+              prev[senderUser.id] = {
+                name: senderUser.fullName,
+                fullName: sharedFullName,
+                signature: sharedSignature,
+                files: sharedfile ? [sharedfile] : [],
+                customField: sharedCustomField ? [sharedCustomField] : [],
+              };
+            }
+
+            SystemMessage.hostShareCounterData({ ...prev });
+
+            return { ...prev };
+          });
+        } catch (ignored) {}
+      } else if (msg.includes("SHAREDFILES")) {
+        try {
+          const files = JSON.parse(msg.split("%%%")[2]);
+          setSharedFiles(files);
         } catch (ignored) {}
       }
     },
@@ -1229,6 +1349,7 @@ export default function VirtualSupportView({
           let shareDim = null;
           let permissions = {};
           let sharedFiles = [];
+          let counterSharedData = {};
 
           systemMessages.forEach(async (message) => {
             if (message.msg.includes("HOSTJOINED")) {
@@ -1252,6 +1373,12 @@ export default function VirtualSupportView({
                 const perms = JSON.parse(message.msg.split("%%%")[2]);
                 permissions = perms;
               } catch (ignored) {}
+            } else if (message.msg.includes("COUNTERHOSTSENDDATA")) {
+              try {
+                console.log("==========", message);
+                const sharedData = JSON.parse(message.msg.split("%%%")[2]);
+                counterSharedData = sharedData;
+              } catch (ignored) {}
             } else if (message.msg.includes("SHAREDFILES")) {
               try {
                 const files = JSON.parse(message.msg.split("%%%")[2]);
@@ -1265,8 +1392,9 @@ export default function VirtualSupportView({
             }
           });
 
-          setPermissions(permissions);
+          // setPermissions(permissions);
           setSharedFiles(sharedFiles);
+          setCounterSharedData(counterSharedData);
 
           const isHostPresent = participantsRef.current?.some(
             (p) => p.uid === meetingRef.current?.customerId,
@@ -1315,6 +1443,12 @@ export default function VirtualSupportView({
       SystemMessage.changeSharedFiles(sharedFiles);
     }
   }, [isHost, SystemMessage, sharedFiles]);
+
+  useEffect(() => {
+    if (!isHost) {
+      SystemMessage.changeCounterUserSharedData(counterSharedData);
+    }
+  }, [isHost, SystemMessage, counterSharedData]);
 
   useEffect(() => {
     if (!isHost && !permissions.screen) unPublishScreen();
@@ -1594,6 +1728,30 @@ export default function VirtualSupportView({
                             </Row>
                           </Col>
                         )}
+
+                        {askedForCounter && (
+                          <Col>
+                            <Row
+                              justify="center"
+                              className={
+                                activeBtn === "userCounter" &&
+                                "sider-active-btn"
+                              }
+                            >
+                              <Tooltip title="Counter">
+                                <CounterSVG
+                                  className="clickable"
+                                  style={{ width: "22px", height: "22px" }}
+                                  color={"#c7c7cc"}
+                                  onClick={() => {
+                                    setHideSide(false);
+                                    setActiveBtn("userCounter");
+                                  }}
+                                />
+                              </Tooltip>
+                            </Row>
+                          </Col>
+                        )}
                       </>
                     )}
 
@@ -1613,6 +1771,16 @@ export default function VirtualSupportView({
                           },
                           { id: "counter", title: "Counter", icon: CounterSVG },
                           {
+                            id: "productionTools",
+                            title: "Production Tools",
+                            icon: AlbumsSVG,
+                          },
+                          {
+                            id: "counterUserSharedData",
+                            title: "Users Shared Data",
+                            icon: VirtualMeetSVG,
+                          },
+                          {
                             id: "holomeet",
                             title: "Holomeet",
                             image: hologram,
@@ -1628,7 +1796,12 @@ export default function VirtualSupportView({
                               <Tooltip title={item.title}>
                                 {item.icon ? (
                                   <item.icon
+                                    color="#c7c7cc"
                                     className="clickable"
+                                    style={{
+                                      width: "24px",
+                                      height: "24px",
+                                    }}
                                     onClick={() => {
                                       setHideSide(false);
                                       setActiveBtn(item.id);
@@ -1692,6 +1865,11 @@ export default function VirtualSupportView({
                   sharingWhiteboard={!!fastboard}
                   setHideSide={setHideSide}
                   fastboard={fastboard}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
                 />
               </div>
             </Col>
@@ -1950,6 +2128,9 @@ export default function VirtualSupportView({
               joinedSharedDim={joinedSharedDim}
               setJoinedSharedDim={setJoinedSharedDim}
               fastboard={fastboard}
+              setAskedForCounter={setAskedForCounter}
+              counterFormData={counterFormData}
+              counterSharedData={counterSharedData}
             />
           </div>
         </Col>

@@ -11,6 +11,10 @@ const login = (data) => {
   return axios.post(SERVICE_BASE + "login", data);
 };
 
+const loginAsGuest = (data) => {
+  return axios.post(SERVICE_BASE + "login-as-guest ", data);
+};
+
 const loginWithGoogle = (data) => {
   return axios.post(SERVICE_BASE + "login-google", data);
 };
@@ -38,6 +42,7 @@ const verifyForgetPassword = (data) => {
 const AuthService = {
   getAuth,
   login,
+  loginAsGuest,
   loginWithGoogle,
   loginWithFacebook,
   logout,

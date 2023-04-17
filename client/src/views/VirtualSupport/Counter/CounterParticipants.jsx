@@ -14,15 +14,20 @@ import {
 
 import { ArrowRightSVG, SearchSVG } from "assets/jsx-svg";
 
-export default function CounterParticipants({ setActiveBtn, participants }) {
-  const [form] = Form.useForm();
+export default function CounterParticipants({
+  setActiveBtn,
+  participants,
+  counterForm,
+  SystemMessage,
+  counterActiveBtn,
+  setAskedForCounter,
+}) {
+  const [participantsForm] = Form.useForm();
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [showParticipants, setShowParticipants] = useState(
     participants.filter((participant) => !participant.isHost),
   );
-
-  console.warn("test", selectedUsers);
 
   useMemo(() => {
     if (searchValue) {
@@ -46,12 +51,59 @@ export default function CounterParticipants({ setActiveBtn, participants }) {
   };
 
   const onFinish = (values) => {
-    console.log(values);
+    console.warn(counterForm.getFieldValue("fileName"));
+    const fileName = counterForm.getFieldValue("fileName");
+    const customField = counterForm.getFieldValue("customField");
 
     if (values.users.length) {
-      notification.success({ message: "Invitation send Succesfully ✔" });
-      form.setFieldValue("users", undefined);
-      setActiveBtn("counter");
+      if (counterActiveBtn === 1 || counterActiveBtn === 2) {
+        SystemMessage.askSelectedUserForCounter({
+          users: values.users,
+          formData: {
+            type: counterActiveBtn,
+            message: `${counterActiveBtn === 1 ? "full name" : "signature"}`,
+          },
+        });
+        notification.success({ message: "Invitation send Succesfully ✔" });
+        participantsForm.setFieldValue("users", undefined);
+      }
+
+      if (counterActiveBtn === 3 && fileName) {
+        SystemMessage.askSelectedUserForCounter({
+          users: values.users,
+          formData: {
+            type: counterActiveBtn,
+            message: `${fileName} file`,
+            fileName: fileName,
+          },
+        });
+        notification.success({ message: "Invitation send Succesfully ✔" });
+        participantsForm.setFieldValue("users", undefined);
+        setActiveBtn("counterUserSharedData");
+      } else if (counterActiveBtn === 3 && !fileName) {
+        notification.error({ message: "You should fill the file name" });
+        setActiveBtn("counter");
+      }
+
+      if (counterActiveBtn === 4 && customField) {
+        SystemMessage.askSelectedUserForCounter({
+          users: values.users,
+          formData: {
+            type: counterActiveBtn,
+            message: `${customField} file`,
+            customField: customField,
+          },
+        });
+        notification.success({ message: "Invitation send Succesfully ✔" });
+        participantsForm.setFieldValue("users", undefined);
+        setActiveBtn("counterUserSharedData");
+      } else if (counterActiveBtn === 4 && !customField) {
+        notification.error({ message: "You should fill the file name" });
+        setActiveBtn("counter");
+      }
+
+      setAskedForCounter(true);
+      setActiveBtn("counterUserSharedData");
     }
   };
 
@@ -75,7 +127,7 @@ export default function CounterParticipants({ setActiveBtn, participants }) {
         </Col>
       </Row>
 
-      <Form form={form} onFinish={onFinish} className="h-100">
+      <Form form={participantsForm} onFinish={onFinish} className="h-100">
         <ConfigProvider
           theme={{
             components: {
@@ -123,36 +175,40 @@ export default function CounterParticipants({ setActiveBtn, participants }) {
                     paddingRight: "0.5rem",
                   }}
                 >
-                  <Form.Item name="users" noStyle>
-                    <Row gutter={[0, 20]} className="custome-checkbox-reversed">
+                  <Row gutter={[0, 20]} className="custome-checkbox-reversed">
+                    <Form.Item name="users" noStyle>
                       <Checkbox.Group
-                        style={{ height: "calc(100% - 40px)" }}
+                        style={{
+                          height: "calc(100% - 40px)",
+                          width: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          rowGap: "16px",
+                        }}
                         className="w-100"
                         onChange={(e) => setSelectedUsers(e)}
                       >
                         {showParticipants.map((user) => (
                           <Checkbox value={user.uid} key={user.uid}>
-                            <Col xs={24} key={user.uid}>
-                              <Row align="middle" gutter={[12, 0]} wrap={false}>
-                                <Col>
-                                  <Avatar
-                                    src={user.profileImage}
-                                    alt={user.name}
-                                    size={35}
-                                  />
-                                </Col>
-                                <Col>
-                                  <Typography.Text className="fw-500">
-                                    {user.name}
-                                  </Typography.Text>
-                                </Col>
-                              </Row>
-                            </Col>
+                            <Row align="middle" gutter={[12, 0]} wrap={false}>
+                              <Col>
+                                <Avatar
+                                  src={user.profileImage}
+                                  alt={user.name}
+                                  size={35}
+                                />
+                              </Col>
+                              <Col>
+                                <Typography.Text className="fw-500">
+                                  {user.name}
+                                </Typography.Text>
+                              </Col>
+                            </Row>
                           </Checkbox>
                         ))}
                       </Checkbox.Group>
-                    </Row>
-                  </Form.Item>
+                    </Form.Item>
+                  </Row>
                 </Col>
               </Row>
             </Col>

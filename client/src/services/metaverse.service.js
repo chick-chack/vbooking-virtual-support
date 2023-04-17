@@ -21,11 +21,21 @@ const renameDimension = (id, data) => {
   return axios.put(SERVICE_BASE + `rename-dimension/${id}`, data);
 };
 
+const getHoloCategory = () => {
+  return axios.get(SERVICE_BASE + "holo-category");
+};
+
+const getHoloDimensionByCategory = (id) => {
+  return axios.get(SERVICE_BASE + `holo-dimension-by-category/${id}`);
+};
+
 const MetaverseService = {
   addDimension,
   deleteDimension,
   renameDimension,
   getMyDimensions,
+  getHoloCategory,
+  getHoloDimensionByCategory,
 };
 
 export default MetaverseService;

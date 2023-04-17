@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 const VirtualMeetSVG = (props) => (
   <svg
@@ -8,7 +8,10 @@ const VirtualMeetSVG = (props) => (
     viewBox="0 0 17 14.45"
     {...props}
   >
-    <g data-name="virtual, reality, 360, degree" fill="#2d2d2d">
+    <g
+      data-name="virtual, reality, 360, degree"
+      fill={props.color || "#2d2d2d"}
+    >
       <path
         data-name="Path 1660"
         d="M3.961 7.812A8.283 8.283 0 0 1 0 5.1v5.1c0 1.445 1.345 2.727 3.689 3.517a.425.425 0 0 0 .561-.4v-5.1a.425.425 0 0 0-.289-.405Z"

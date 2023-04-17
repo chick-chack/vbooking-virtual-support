@@ -25,11 +25,22 @@ function App() {
       });
     });
 
+    let onClosePageListener;
+    if (user?.isGuest) {
+      onClosePageListener = window.addEventListener("beforeunload", (event) => {
+        event.preventDefault();
+        localStorage.removeItem("vverse-token");
+        setUser(null);
+        event.returnValue = "";
+      });
+    }
+
     return () => {
       window.removeEventListener("offline", offlineListener);
       window.removeEventListener("online", onlineListener);
+      window.removeEventListener("beforeunload", onClosePageListener);
     };
-  }, []);
+  }, [user?.isGuest]);
 
   useEffect(() => {
     (async () => {
@@ -73,7 +84,15 @@ function App() {
     </div>
   ) : (
     <UserContext.Provider value={{ user, setUser }}>
-      {user ? <VverseRouter /> : <NotAuthRouter />}
+      {user ? (
+        !user.isGuest ? (
+          <VverseRouter />
+        ) : (
+          <NotAuthRouter />
+        )
+      ) : (
+        <NotAuthRouter />
+      )}
     </UserContext.Provider>
   );
 }

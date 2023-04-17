@@ -19,22 +19,22 @@
 }
 
 .counter-section .counter-btn:hover .ant-typography {
-  color: #5c9937;
+  color: #960bcd;
 }
 
 .counter-section .counter-btn:hover svg {
-  fill: #5c9937;
+  fill: #960bcd;
 }
 
 .counter-section .counter-btn-active {
-  border: 1px solid #5c9937;
+  border: 1px solid #960bcd;
 }
 
 .counter-section .counter-btn-active .ant-typography {
-  color: #5c9937;
+  color: #960bcd;
 }
 .counter-section .counter-btn-active svg {
-  fill: #5c9937;
+  fill: #960bcd;
 }
 
 .counter-search-input .ant-input-affix-wrapper {

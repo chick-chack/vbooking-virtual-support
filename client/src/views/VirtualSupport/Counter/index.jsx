@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Button, Col, Form, Input, Row, Typography } from "antd";
+import { Button, Col, Form, Input, Row, Typography, notification } from "antd";
 
 import {
   CounterFileSVG,
@@ -10,60 +9,137 @@ import {
 
 import "./styles.css";
 
-export default function Counter({ setActiveBtn }) {
-  const [form] = Form.useForm();
-  const [counterActiveBtn, setCounterActiveBtn] = useState(null);
-
+export default function Counter({
+  setActiveBtn,
+  SystemMessage,
+  counterForm,
+  counterActiveBtn,
+  setCounterActiveBtn,
+  setAskedForCounter,
+}) {
   const onFinish = (values) => {
-    console.log(values);
+    if (counterActiveBtn === 1) {
+      SystemMessage.askAllUserForCounter({
+        formData: {
+          type: counterActiveBtn,
+          message: `full name`,
+          fileName: "",
+          customField: "",
+        },
+      });
+      notification.info({
+        message:
+          "Notification has been send to participants to submit full name.",
+      });
+    }
+    if (counterActiveBtn === 2) {
+      SystemMessage.askAllUserForCounter({
+        formData: {
+          type: counterActiveBtn,
+          message: `signature`,
+          fileName: "",
+          customField: "",
+        },
+      });
+      notification.info({
+        message:
+          "Notification has been send to participants to submit signature.",
+      });
+    }
+
+    if (counterActiveBtn === 3) {
+      SystemMessage.askAllUserForCounter({
+        formData: {
+          type: counterActiveBtn,
+          message: `${values.fileName} file`,
+          fileName: values.fileName,
+          customField: values.customField,
+        },
+      });
+      notification.info({
+        message:
+          "Notification has been send to participants to submit full name.",
+      });
+    }
+
+    if (counterActiveBtn === 4) {
+      SystemMessage.askAllUserForCounter({
+        formData: {
+          type: counterActiveBtn,
+          message: `${values.customField} field`,
+          fileName: "",
+          customField: values.customField,
+        },
+      });
+      notification.info({
+        message: `Notification has been send to participants to submit ${values.customField} field.`,
+      });
+    }
+    setAskedForCounter(true);
+    setActiveBtn("counterUserSharedData");
+    counterForm.resetFields();
   };
 
   return (
-    <Row className="counter-section h-100" justify="space-between">
-      <Col flex={1}>
-        <Row>
-          <Typography.Text className="fz-18 fw-500">Counter</Typography.Text>
-        </Row>
+    <Form
+      name="counter-form"
+      onFinish={onFinish}
+      layout="vertical"
+      requiredMark={false}
+      form={counterForm}
+      className="w-100 h-100"
+    >
+      <Row
+        gutter={[0, 24]}
+        className="counter-section h-100"
+        justify="space-between"
+      >
+        <Col flex={1}>
+          <Row>
+            <Typography.Text className="fz-18 fw-500">Counter</Typography.Text>
+          </Row>
 
-        <Row style={{ margin: "24px 0 24px" }}>
-          <Typography.Text className="fz-16 fw-500">
-            Ask Participants For Data or Files
-          </Typography.Text>
-        </Row>
-        <Row gutter={[14, 16]}>
-          {counterButtons.map((btn) => (
-            <Col key={btn.id} xs={24} md={12}>
-              <button
-                className={`counter-btn ${
-                  counterActiveBtn === btn.id && "counter-btn-active"
-                }`}
-                onClick={() => setCounterActiveBtn(btn.id)}
-              >
-                <Row gutter={[12, 0]} align="middle" wrap={false}>
-                  <Col>
-                    <Row align="middle">
-                      <btn.icon />
-                    </Row>
-                  </Col>
-                  <Col>
-                    <Typography.Text ellipsis>{btn.label}</Typography.Text>
-                  </Col>
-                </Row>
-              </button>
-            </Col>
-          ))}
+          <Row style={{ margin: "24px 0 24px" }}>
+            <Typography.Text className="fz-16 fw-500">
+              Ask Participants For Data or Files
+            </Typography.Text>
+          </Row>
+          <Row gutter={[14, 16]}>
+            {counterButtons.map((btn) => (
+              <Col key={btn.id} xs={24} md={12}>
+                <button
+                  className={`counter-btn ${
+                    counterActiveBtn === btn.id && "counter-btn-active"
+                  }`}
+                  type="button"
+                  onClick={() => setCounterActiveBtn(btn.id)}
+                >
+                  <Row gutter={[12, 0]} align="middle" wrap={false}>
+                    <Col>
+                      <Row align="middle">
+                        <btn.icon />
+                      </Row>
+                    </Col>
+                    <Col>
+                      <Typography.Text ellipsis>{btn.label}</Typography.Text>
+                    </Col>
+                  </Row>
+                </button>
+              </Col>
+            ))}
 
-          <Form
-            layout="vertical"
-            requiredMark={false}
-            name="counter-form"
-            form={form}
-            onFinish={onFinish}
-            className="w-100"
-          >
             {counterActiveBtn === 3 && (
               <Col xs={24}>
-                <Form.Item name="fileName" label="File Name">
+                <Form.Item
+                  rules={[
+                    {
+                      required: counterActiveBtn === 3,
+                      message: "Please Enter The File Name",
+                    },
+                  ]}
+                  name="fileName"
+                  label="File Name"
+                >
                   <Input
                     placeholder="Enter Here"
                     style={{ background: "#fff" }}
@@ -74,7 +150,16 @@ export default function Counter({ setActiveBtn }) {
 
             {counterActiveBtn === 4 && (
               <Col xs={24}>
-                <Form.Item name="fieldTitle" label="Field Title">
+                <Form.Item
+                  rules={[
+                    {
+                      required: counterActiveBtn === 4,
+                      message: "Please Enter The Field Title",
+                    },
+                  ]}
+                  name="customField"
+                  label="Field Title"
+                >
                   <Input
                     placeholder="Enter Here"
                     style={{ background: "#fff" }}
@@ -82,38 +167,39 @@ export default function Counter({ setActiveBtn }) {
                 </Form.Item>
               </Col>
             )}
-          </Form>
-        </Row>
-      </Col>
+          </Row>
+        </Col>
 
-      <Col>
-        <Row gutter={[14, 16]}>
-          <Col xs={24} md={12}>
-            <button
-              onClick={() => setActiveBtn("counterParticipants")}
-              className="gradiant-border-btn w-100 counter-gradiant-btn"
-              data="Select participants"
-              style={{
-                height: "100%",
-                width: "100%",
-                borderRadius: "12px",
-              }}
-            ></button>
-          </Col>
-          <Col xs={24} md={12}>
-            <Button
-              style={{
-                borderRadius: "12px",
-              }}
-              type="primary"
-              className="w-100"
-            >
-              Send to All
-            </Button>
-          </Col>
-        </Row>
-      </Col>
-    </Row>
+        <Col>
+          <Row gutter={[14, 16]}>
+            <Col xs={24} md={12}>
+              <button
+                onClick={() => setActiveBtn("counterParticipants")}
+                className="gradiant-border-btn w-100 counter-gradiant-btn"
+                data="Select participants"
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  borderRadius: "12px",
+                }}
+              ></button>
+            </Col>
+            <Col xs={24} md={12}>
+              <Button
+                style={{
+                  borderRadius: "12px",
+                }}
+                type="primary"
+                className="w-100"
+                htmlType="submit"
+              >
+                Send to All
+              </Button>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+    </Form>
   );
 }
 
