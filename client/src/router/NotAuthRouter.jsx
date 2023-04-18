@@ -25,7 +25,7 @@ export default function NotAuthRouter() {
       try {
         if (
           searchParams.get("sid") ===
-          "NUqGk1GpRURaFR.3oGm02OkLTL8UbKBARusWlSuN1nggryqkTiF1."
+          "NUqGk1GpRURaFR.3oGm02OkLTL8UbKBARusWlSuN1nggryqkTiF1"
         ) {
           axios.defaults.headers.authorization =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiY3VzdG9tZXItd2ViLWRhc2hib2FyZCIsImlkIjo3NzQsImlhdCI6MTY4MTczODk5Mn0.N_yeYhqRg0GjlkS7RJhTlAKp0kchX6GcJxO6hRi3WEQ";
