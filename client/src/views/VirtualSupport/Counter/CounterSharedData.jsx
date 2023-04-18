@@ -1,4 +1,4 @@
-import { Col, Image, Row, Tooltip, Typography } from "antd";
+import { Avatar, Col, Image, Row, Tooltip, Typography } from "antd";
 
 import { ArrowRightSVG } from "assets/jsx-svg";
 import png from "assets/images/png.png";
@@ -26,24 +26,49 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
             paddingBottom: "1rem",
           }}
         >
-          <Row>
-            <Typography.Text
-              className="fz-16 fw-500"
-              style={{ color: "#960bcd" }}
-            >
-              {data.name}
-            </Typography.Text>
+          <Row align="middle" gutter={[8, 8]} style={{ maxWidth: "100%" }}>
+            {data.userData && (
+              <Col>
+                <Avatar
+                  size={38}
+                  style={{ objectFit: "cover" }}
+                  src={data.userData.profileImage}
+                />
+              </Col>
+            )}
+            <Col>
+              <Typography.Text
+                className="fz-16 fw-500"
+                style={{ color: "#960bcd" }}
+              >
+                {data.userData ? data.userData.fullName : data.name}
+              </Typography.Text>
+            </Col>
           </Row>
 
           {data.fullName && (
-            <Row className="mt-1">
-              <Typography.Text>
-                <span className="fw-600" style={{ fontStyle: "italic" }}>
-                  Full Name:
-                </span>{" "}
-                {data.fullName}
-              </Typography.Text>
-            </Row>
+            <>
+              <Row className="mt-1">
+                <Typography.Text>
+                  <span className="fw-600" style={{ fontStyle: "italic" }}>
+                    User Full Name:
+                  </span>{" "}
+                  {data.fullName.user ? data.fullName.user : data.fullName}
+                </Typography.Text>
+              </Row>
+
+              {data.fullName.hisGuests &&
+                data.fullName.hisGuests.map((guest, index) => (
+                  <Row className="mt-1" key={index}>
+                    <Typography.Text>
+                      <span className="fw-600" style={{ fontStyle: "italic" }}>
+                        Guest {index + 1}:
+                      </span>{" "}
+                      {guest}
+                    </Typography.Text>
+                  </Row>
+                ))}
+            </>
           )}
 
           {data.files.length > 0 && (
@@ -154,23 +179,52 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
           )}
 
           {data.customField && data.customField.length > 0 && (
-            <Row className="mt-1">
-              <Typography.Text
-                className="fw-600"
-                style={{ fontStyle: "italic" }}
-              >
-                Custom Field:{" "}
-              </Typography.Text>
-            </Row>
-          )}
-          {data.customField &&
-            data.customField.map((field, index) => (
-              <Row key={index}>
-                <Typography.Text>
-                  {field.name} : {field.value}
+            <>
+              <Row className="mt-1">
+                <Typography.Text
+                  className="fw-600"
+                  style={{ fontStyle: "italic" }}
+                >
+                  Custom Field:{" "}
                 </Typography.Text>
               </Row>
-            ))}
+
+              {data.customField &&
+                data.customField.map((field, index) => {
+                  if (field.user) {
+                    return (
+                      <>
+                        <Row key={index}>
+                          <Typography.Text>
+                            {field.user.name} : {field.user.value}
+                          </Typography.Text>
+                        </Row>
+
+                        {field.hisGuests.length > 0 &&
+                          field.hisGuests.map((guest, index) => (
+                            <Row key={index}>
+                              <Typography.Text>
+                                {guest.name} : {guest.value} (Guest {index + 1})
+                              </Typography.Text>
+                            </Row>
+                          ))}
+                      </>
+                    );
+                  } else {
+                    return null;
+                  }
+                })}
+
+              {data.customField.hisGuests &&
+                data.customField.hisGuests.map((field, index) => (
+                  <Row key={index}>
+                    <Typography.Text>
+                      {field.name} : {field.value} (Guest {index + 1})
+                    </Typography.Text>
+                  </Row>
+                ))}
+            </>
+          )}
         </Col>,
       );
     }

@@ -860,6 +860,8 @@ export default function VirtualSupportView({
 
           setCounterSharedData((prev) => {
             if (prev.hasOwnProperty(senderUser.id)) {
+              prev[senderUser.id].userData = senderUser;
+
               if (sharedFullName) {
                 prev[senderUser.id].fullName = sharedFullName;
               }
@@ -881,7 +883,7 @@ export default function VirtualSupportView({
               }
             } else {
               prev[senderUser.id] = {
-                name: senderUser.fullName,
+                userData: senderUser,
                 fullName: sharedFullName,
                 signature: sharedSignature,
                 files: sharedfile ? [sharedfile] : [],
