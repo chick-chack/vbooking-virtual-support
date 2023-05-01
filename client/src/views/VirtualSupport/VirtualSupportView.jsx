@@ -1544,7 +1544,9 @@ export default function VirtualSupportView({
             forceSoundMute();
           }
 
-          setPermissions(permissions);
+          if (permissions?.screen) {
+            setPermissions(permissions);
+          }
           setSharedFiles(sharedFiles);
           setCounterSharedData(counterSharedData);
           setSharedHolomeetId(Number(sharedHolomeetId));
