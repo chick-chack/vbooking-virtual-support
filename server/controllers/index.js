@@ -8,12 +8,6 @@ router.use((req, res, next) => {
   next();
 });
 
-router.use(express.static(path.join(__dirname, "..", "build")));
-
-router.use((req, res) => {
-  res.sendFile(path.join(__dirname, "..", "build", "index.html"));
-});
-
 router.get("/new-WebGL/Build/visit-dimension.data.br", (_, res, next) => {
   res.setHeader("Content-Encoding", "br");
 
@@ -35,6 +29,12 @@ router.get("/new-WebGL/Build/visit-dimension.wasm.br", (_, res, next) => {
   res.setHeader("Content-Type", "application/wasm");
 
   next();
+});
+
+router.use(express.static(path.join(__dirname, "..", "build")));
+
+router.use((req, res) => {
+  res.sendFile(path.join(__dirname, "..", "build", "index.html"));
 });
 
 router.use((req, res, next) => {
