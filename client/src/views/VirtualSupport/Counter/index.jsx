@@ -8,6 +8,8 @@ import {
 } from "assets/jsx-svg";
 
 import "./styles.css";
+import { useContext } from "react";
+import userContext from "context/userContext";
 
 export default function Counter({
   setActiveBtn,
@@ -16,65 +18,37 @@ export default function Counter({
   counterActiveBtn,
   setCounterActiveBtn,
   setAskedForCounter,
+  iframeRef,
+  participants,
 }) {
+  const { user } = useContext(userContext);
   const onFinish = (values) => {
-    if (counterActiveBtn === 1) {
-      SystemMessage.askAllUserForCounter({
-        formData: {
-          type: counterActiveBtn,
-          message: `full name`,
-          fileName: "",
-          customField: "",
-        },
-      });
-      notification.info({
-        message:
-          "Notification has been send to participants to submit full name.",
-      });
-    }
-    if (counterActiveBtn === 2) {
-      SystemMessage.askAllUserForCounter({
-        formData: {
-          type: counterActiveBtn,
-          message: `signature`,
-          fileName: "",
-          customField: "",
-        },
-      });
-      notification.info({
-        message:
-          "Notification has been send to participants to submit signature.",
+    SystemMessage.askAllUserForCounter({
+      formData: {
+        type: counterActiveBtn,
+        message: `${values.fileName} file`,
+        fileName: values.fileName,
+        customField: values.customField,
+      },
+    });
+    if (iframeRef) {
+      participants.forEach((participant) => {
+        if (participant.uid === user.id) return;
+        iframeRef.contentWindow?.unityInstance?.SendMessage(
+          "BG_Scripts/JsBridge",
+          "SendInputRequest",
+          JSON.stringify({
+            userId: participant.uid,
+            type: counterActiveBtn,
+            fileName: values.fileName ? values.fileName : null,
+            customField: values.customField ? values.customField : null,
+          }),
+        );
       });
     }
-
-    if (counterActiveBtn === 3) {
-      SystemMessage.askAllUserForCounter({
-        formData: {
-          type: counterActiveBtn,
-          message: `${values.fileName} file`,
-          fileName: values.fileName,
-          customField: values.customField,
-        },
-      });
-      notification.info({
-        message:
-          "Notification has been send to participants to submit full name.",
-      });
-    }
-
-    if (counterActiveBtn === 4) {
-      SystemMessage.askAllUserForCounter({
-        formData: {
-          type: counterActiveBtn,
-          message: `${values.customField} field`,
-          fileName: "",
-          customField: values.customField,
-        },
-      });
-      notification.info({
-        message: `Notification has been send to participants to submit ${values.customField} field.`,
-      });
-    }
+    notification.info({
+      message: "Notification has been send to participants to submit.",
+    });
     setAskedForCounter(true);
     setActiveBtn("counterUserSharedData");
     counterForm.resetFields();
@@ -99,10 +73,28 @@ export default function Counter({
             <Typography.Text className="fz-18 fw-500">Counter</Typography.Text>
           </Row>
 
-          <Row style={{ margin: "24px 0 24px" }}>
-            <Typography.Text className="fz-16 fw-500">
-              Ask Participants For Data or Files
-            </Typography.Text>
+          <Row
+            style={{ margin: "24px 0 24px" }}
+            justify="space-between"
+            align="middle"
+            gutter={[12, 0]}
+          >
+            <Col>
+              <Typography.Text className="fz-16 fw-500">
+                Ask Participants For Data or Files
+              </Typography.Text>
+            </Col>
+
+            <Col>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setActiveBtn("counterUserSharedData");
+                }}
+              >
+                Users Data
+              </Button>
+            </Col>
           </Row>
           <Row gutter={[14, 16]}>
             {counterButtons.map((btn) => (

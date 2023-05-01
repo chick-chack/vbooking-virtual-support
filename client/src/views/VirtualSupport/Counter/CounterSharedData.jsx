@@ -78,13 +78,13 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
                   className="fw-600"
                   style={{ fontStyle: "italic" }}
                 >
-                  Fiels Uploaded:{" "}
+                  Files Uploaded:{" "}
                 </Typography.Text>
               </Row>
 
               {data.files.map((file) => (
                 <Row
-                  key={file.id}
+                  key={file.id || file}
                   justify="space-between"
                   align="middle"
                   wrap={false}
@@ -97,15 +97,15 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
                         <Image
                           width={32}
                           height={32}
-                          alt={file.name}
-                          src={filesExtentionsImg(file.type)}
+                          alt={file.name || file}
+                          src={filesExtentionsImg(file.type || file)}
                           preview={false}
                         />
                       </Col>
                       <Col style={{ maxWidth: "100px" }}>
-                        <Tooltip title={file.name}>
+                        <Tooltip title={file.name || file}>
                           <Typography.Text ellipsis>
-                            {file.name}
+                            {file.name || file}
                           </Typography.Text>
                         </Tooltip>
                       </Col>
@@ -113,7 +113,7 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
                   </Col>
                   <Col
                     className="clickable"
-                    onClick={() => window.open(file.url)}
+                    onClick={() => window.open(file.url || file)}
                   >
                     <Row align="middle" wrap={false} gutter={[8, 0]}>
                       <Col>
@@ -150,15 +150,17 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
                       <Image
                         width={32}
                         height={32}
-                        alt={data.signature.name}
-                        src={filesExtentionsImg(data.signature.type)}
+                        alt={data.signature.name || data.signature}
+                        src={filesExtentionsImg(
+                          data.signature.name || data.signature,
+                        )}
                         preview={false}
                       />
                     </Col>
                     <Col style={{ maxWidth: "100px" }}>
-                      <Tooltip title={data.signature.name}>
+                      <Tooltip title={data.signature.name || data.signature}>
                         <Typography.Text ellipsis>
-                          {data.signature.name}
+                          {data.signature.name || data.signature}
                         </Typography.Text>
                       </Tooltip>
                     </Col>
@@ -166,7 +168,9 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
                 </Col>
                 <Col
                   className="clickable"
-                  onClick={() => window.open(data.signature.url)}
+                  onClick={() =>
+                    window.open(data.signature.url || data.signature)
+                  }
                 >
                   <Row align="middle" wrap={false} gutter={[8, 0]}>
                     <Col>
@@ -200,7 +204,8 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
                           </Typography.Text>
                         </Row>
 
-                        {field.hisGuests.length > 0 &&
+                        {field.hisGuests &&
+                          field.hisGuests.length > 0 &&
                           field.hisGuests.map((guest, index) => (
                             <Row key={index}>
                               <Typography.Text>
@@ -253,7 +258,7 @@ export default function CounterSharedData({ setActiveBtn, counterSharedData }) {
       <Row style={{ marginTop: "24px" }} gutter={[0, 24]}>
         <Col xs={24}>
           <Typography.Text className="fz-16 fw-500">
-            Files shared by users:
+            Data shared by users:
           </Typography.Text>
         </Col>
       </Row>

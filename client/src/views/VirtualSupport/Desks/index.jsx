@@ -59,7 +59,9 @@ export default function Desks() {
                         className="fz-14"
                         style={{ height: "30px", padding: "0 10px" }}
                         onClick={() => {
-                          navigate(`/vindo-desk/${desk.meetingId}?type=desk`);
+                          navigate(
+                            `/vindo-desk/${desk.meetingId}?type=desk&sid=NUqGk1GpRURaFR.3oGm02OkLTL8UbKBARusWlSuN1nggryqkTiF1`,
+                          );
                           window.location.reload(false);
                         }}
                       >

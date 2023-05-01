@@ -45,7 +45,9 @@ export default function CounterForUser({
         },
         fullName: {
           user: values.fullName,
-          hisGuests: values.fullNameGuests.map((guest) => guest.guestName),
+          hisGuests: values.fullNameGuests
+            ? values.fullNameGuests.map((guest) => guest.guestName)
+            : null,
         },
       });
     } else if (counterFormData.type === 2) {
@@ -54,6 +56,7 @@ export default function CounterForUser({
           user: {
             id: user.id,
             fullName: user.fullName,
+            profileImage: user.profileImage,
           },
           signature: file,
         });
@@ -81,10 +84,12 @@ export default function CounterForUser({
             name: counterFormData.customField,
             value: values.customField,
           },
-          hisGuests: values.customFieldGuests.map((guest) => ({
-            name: counterFormData.customField,
-            value: guest.guestCustomField,
-          })),
+          hisGuests: values.customFieldGuests
+            ? values.customFieldGuests.map((guest) => ({
+                name: counterFormData.customField,
+                value: guest.guestCustomField,
+              }))
+            : null,
         },
       });
     }
