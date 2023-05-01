@@ -51,6 +51,23 @@
   background-color: #d4d4d8;
 }
 
+.virtual-support .virtual-support-main .full-screen-asider-navigate {
+  height: 100%;
+  width: 100%;
+  max-width: 75px;
+  height: 100%;
+  background-color: #f2f2f7e6;
+  padding: 58px 1rem;
+  border-right: 1px solid #fff;
+  z-index: 2;
+}
+
+.virtual-support .full-screen-asider-navigate > .ant-row {
+  row-gap: 80px;
+  flex-direction: column;
+  height: 100%;
+}
+
 .virtual-support .virtual-support-main .main-screen-controls {
   position: absolute;
   bottom: 0px;
@@ -60,6 +77,10 @@
   backdrop-filter: blur(10px);
   transition: all 0.3s ease-in-out;
   z-index: 200;
+}
+
+.virtual-support .virtual-support-main .main-screen-controls-hide {
+  bottom: -55px;
 }
 
 .virtual-support .virtual-support-main .close-fullscreen {
@@ -98,6 +119,9 @@
 }
 
 .virtual-support .virtual-support-main .whiteboard-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -110,12 +134,20 @@
   z-index: 2;
 }
 
-.virtual-support .virtual-support-main .whiteboard-top {
+.virtual-support .virtual-support-main .whiteboard-fullscreen {
   position: absolute;
   top: 10px;
-  width: 100%;
-  padding-inline: 10px;
-  z-index: 1;
+  left: 19px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  z-index: 2;
 }
 
 .virtual-support .virtual-support-main .pdf-canvas {
@@ -134,8 +166,35 @@
   height: 100% !important;
 }
 
+.virtual-support .netless-window-manager-sizer-horizontal::before {
+  flex: none !important;
+  height: 1px !important;
+}
+
+.virtual-support .netless-window-manager-wrapper {
+  flex: 1;
+}
+
+.virtual-support .netless-window-manager-sizer:before {
+  flex: none !important;
+}
+
+.virtual-support .netless-window-manager-sizer:after {
+  flex: none !important;
+  height: 55px;
+}
+
 @media only screen and (max-width: 768px) {
   .virtual-support .virtual-support-main .main-screen-controls {
-    bottom: 6px !important;
+    /* bottom: 0px !important; */
+    padding-bottom: 6px;
+  }
+
+  .virtual-support .virtual-support-main .full-screen-asider-navigate {
+    padding: 58px 1rem 122px;
+  }
+
+  .virtual-support .virtual-support-main .main-screen-controls-hide {
+    bottom: -119px;
   }
 }

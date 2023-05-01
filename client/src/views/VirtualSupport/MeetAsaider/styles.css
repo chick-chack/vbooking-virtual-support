@@ -16,7 +16,7 @@
   }
 }
 
-@media only screen and (max-width: 1200px) {
+@media only screen and (max-width: 1199px) {
   .virtual-support .hide-sider {
     display: none;
   }

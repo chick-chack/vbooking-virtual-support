@@ -89,35 +89,13 @@
   border-radius: 30px 0px 0px 30px;
   padding: 30px 1rem;
   border-right: 1px solid #fff;
+  flex: 1;
 }
 
 .virtual-support .virtual-support-nav-sider > .ant-row {
   row-gap: 80px;
-}
-
-.virtual-support .virtual-support-nav-sider-btns-wraper {
-  width: 100%;
-}
-
-.virtual-support .virtual-support-nav-sider > .ant-row,
-.virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns {
-  flex-direction: column;
   height: 100%;
-}
-
-.virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns,
-.virtual-support
-  .virtual-support-nav-sider
-  .virtual-support-nav-sider-btns
-  > .ant-col {
-  width: 100%;
-}
-
-.virtual-support .virtual-support-avatar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  flex: 1;
+  flex-direction: column;
 }
 
 .virtual-support .invite-gradiant-text {
@@ -228,20 +206,6 @@
   animation: fadeIn 0.4s ease-in-out;
 }
 
-.virtual-support .sider-active-btn::after {
-  content: "";
-  position: absolute;
-  right: -16px;
-  width: 3px;
-  height: 100%;
-  border-radius: 8px 0 0 8px;
-  background-color: #960bcd;
-}
-
-.virtual-support .sider-active-btn svg path {
-  fill: #960bcd;
-}
-
 @media only screen and (max-width: 1700px) {
   .virtual-support {
     padding: 1rem;
@@ -267,10 +231,11 @@
   }
 }
 
-@media only screen and (max-width: 1200px) {
+@media only screen and (max-width: 1199px) {
   .virtual-support {
     flex-direction: column;
   }
+
   .virtual-support .virtual-support-aside-hide {
     display: none;
   }
@@ -293,25 +258,26 @@
   .virtual-support .virtual-support-nav-sider > .ant-row {
     row-gap: 0px;
     column-gap: 20px;
+    flex-direction: row;
   }
 
-  .virtual-support .virtual-support-avatar {
-    flex: 0;
-  }
-
-  .virtual-support .virtual-support-nav-sider-btns-wraper {
+  .virtual-support-nav-sider .virtual-support-nav-sider-btns-wraper {
     width: auto;
     height: 100%;
     flex: 1;
     margin: 0 10rem;
   }
 
-  .virtual-support .virtual-support-nav-sider > .ant-row,
-  .virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns {
+  .virtual-support-nav-sider .virtual-support-nav-sider > .ant-row,
+  .virtual-support-nav-sider
+    .virtual-support-nav-sider
+    .virtual-support-nav-sider-btns {
     flex-direction: row;
   }
 
-  .virtual-support .virtual-support-nav-sider .virtual-support-nav-sider-btns,
+  .virtual-support-nav-sider
+    .virtual-support-nav-sider
+    .virtual-support-nav-sider-btns,
   .virtual-support
     .virtual-support-nav-sider
     .virtual-support-nav-sider-btns
@@ -319,13 +285,17 @@
     width: auto;
   }
 
-  .virtual-support .sider-active-btn::after {
+  .virtual-support-nav-sider .sider-active-btn::after {
     bottom: -16px;
     left: 50%;
     transform: translate(-50%, 0);
     width: 32px;
     height: 3px;
     border-radius: 8px 8px 0 0;
+  }
+
+  .virtual-support-nav-sider .virtual-support-avatar {
+    flex: 0;
   }
 }
 
@@ -348,12 +318,12 @@
     overflow-x: auto;
   }
 
-  .virtual-support .virtual-support-nav-sider-btns {
+  .virtual-support-nav-sider .virtual-support-nav-sider-btns-wraper {
     margin: 0;
     flex-wrap: nowrap;
   }
 
-  .virtual-support .virtual-support-nav-sider-btns-wraper {
+  .virtual-support-nav-sider .virtual-support-nav-sider-btns {
     margin: 0;
     flex-wrap: nowrap;
   }

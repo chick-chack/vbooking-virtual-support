@@ -1,5 +1,4 @@
 .holo-meet {
-  margin-top: 24px;
   padding: 0rem 0.5rem;
   height: calc(100% - 24px);
 }
@@ -17,12 +16,6 @@
 
 .holo-meet .holo-meet-category:hover {
   outline: 1px solid #aeaeb2;
-}
-
-.holo-meet .back-btn {
-  position: absolute;
-  top: 32px;
-  left: 40px;
 }
 
 .holo-meet .holo-meet-room-main {

@@ -24,6 +24,8 @@ import AvatarMain from "assets/images/AvatarMain.png";
 
 import "./styles.css";
 import CounterSharedData from "../Counter/CounterSharedData";
+import Desks from "../Desks";
+import EmbedLink from "../EmbedLink";
 
 export default function MeetAsaider({
   isHost,
@@ -53,6 +55,9 @@ export default function MeetAsaider({
   setAskedForCounter,
   counterFormData,
   counterSharedData,
+  sharedHolomeetId,
+  dimensionFrames,
+  iframeRef,
 }) {
   const [productSelected, setProductSelected] = useState(null);
   const [searchValue, setSearchValue] = useState("");
@@ -126,14 +131,20 @@ export default function MeetAsaider({
           <YoutubeLink setActiveBtn={setActiveBtn} fastboard={fastboard} />
         )}
 
+        {activeBtn === "embedLink" && (
+          <EmbedLink setActiveBtn={setActiveBtn} fastboard={fastboard} />
+        )}
+
         {activeBtn === "counter" && (
           <Counter
+            participants={participants}
             setActiveBtn={setActiveBtn}
             SystemMessage={SystemMessage}
             counterForm={counterForm}
             counterActiveBtn={counterActiveBtn}
             setCounterActiveBtn={setCounterActiveBtn}
             setAskedForCounter={setAskedForCounter}
+            iframeRef={iframeRef}
           />
         )}
 
@@ -165,7 +176,12 @@ export default function MeetAsaider({
         )}
 
         {activeBtn === "productionTools" && (
-          <ProductionTools setActiveBtn={setActiveBtn} />
+          <ProductionTools
+            activeBtn={activeBtn}
+            setActiveBtn={setActiveBtn}
+            dimensionFrames={dimensionFrames}
+            iframeRef={iframeRef}
+          />
         )}
 
         {activeBtn === "liveStream" && (
@@ -221,7 +237,9 @@ export default function MeetAsaider({
           </Row>
         )}
 
-        {activeBtn === "holomeet" && <Holomeet />}
+        {activeBtn === "desks" && <Desks />}
+
+        {activeBtn === "holomeet" && <Holomeet SystemMessage={SystemMessage} />}
 
         {activeBtn === "files" && (
           <FilesSharing

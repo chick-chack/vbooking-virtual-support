@@ -15,7 +15,10 @@ import {
 import MeetingCallControls from "../MeetingCallControls";
 
 import DragContext from "../DragContext";
+import MeetNavigateSide from "../MeetNavigateSide";
+
 import "./style.css";
+import MeetAsaider from "../MeetAsaider";
 
 const toAbsoluteUrl = (origin, pathname) =>
   origin + process.env.PUBLIC_URL + pathname;
@@ -71,17 +74,45 @@ export default function MeetingScreen({
   sharingFile,
   setActiveBtn,
   sharingWhiteboard,
+  activeBtn,
+  askedForCounter,
+  setHideSide,
+  messages,
+  sendMessage,
+  participants,
+  shareWhiteboard,
+  sharedFiles,
+  setSharedFiles,
+  sharingDimId,
+  publishScreen,
+  fastboard,
+  setAskedForCounter,
+  counterFormData,
+  counterSharedData,
+  localScreenTrack,
+  chatRoomId,
+  screenSize,
+  hideSide,
+  setDimensionFrames,
+  deskId,
+  iframeRef,
+  setIframeRef,
+  setCounterSharedData,
 }) {
   const [unityCanvas, setUnityCanvas] = useState();
   const [whiteboardContainer, setWhiteboardContainer] = useState();
-  const [iframeRef, setIframeRef] = useState(null);
   const [controlSettingsShow, setControlSettingsShow] = useState(false);
   const [mainFullScreen, setMainFullScreen] = useState(false);
 
   const { user } = useContext(userContext);
   const { dragData, setDragData } = useContext(DragContext);
 
-  const toggleFullScreen = () => setMainFullScreen((prev) => !prev);
+  const toggleFullScreen = () => {
+    if (!mainFullScreen) {
+      setHideSide(true);
+    }
+    setMainFullScreen((prev) => !prev);
+  };
 
   const onDrop = useCallback(
     (e) => {
@@ -160,7 +191,8 @@ export default function MeetingScreen({
         joinedSharedDim ||
         sharingWhiteboard ||
         sharingFile ||
-        sharingScreen,
+        sharingScreen ||
+        screen.type === "desk",
     }),
     [
       SystemMessage,
@@ -170,6 +202,7 @@ export default function MeetingScreen({
       isHost,
       joinedSharedDim,
       permissions,
+      screen.type,
       screen.userFullName,
       setActiveBtn,
       setJoinedSharedDim,
@@ -187,6 +220,69 @@ export default function MeetingScreen({
       unPublishScreen,
     ],
   );
+
+  const setFrames = (frames) => {
+    setDimensionFrames(frames);
+  };
+
+  const setCounterFromUnity = (counter) => {
+    console.log("/////////// setCounterFromUnity", counter);
+
+    setCounterSharedData((prev) => {
+      if (prev.hasOwnProperty(counter.user.id)) {
+        prev[counter.user.id].userData = counter.user;
+
+        if (counter.type === 1) {
+          prev[counter.user.id].fullName = counter.data;
+        }
+        if (counter.type === 2) {
+          prev[counter.user.id].signature = counter.data;
+        }
+        if (counter.type === 3) {
+          prev[counter.user.id].files = [
+            ...prev[counter.user.id].files,
+            counter.data,
+          ];
+        }
+
+        if (counter.type === 4) {
+          prev[counter.user.id].customField = [
+            ...prev[counter.user.id].customField,
+            {
+              user: {
+                name: counter.customField,
+                value: counter.data,
+              },
+              hisGuests: null,
+            },
+          ];
+        }
+      } else {
+        prev[counter.user.id] = {
+          userData: counter.user,
+          fullName: counter.type === 1 ? counter.data : null,
+          signature: counter.type === 2 ? counter.data : null,
+          files: counter.type === 3 ? [counter.data] : [],
+          customField:
+            counter.type === 4
+              ? [
+                  {
+                    user: {
+                      name: counter.customField,
+                      value: counter.data,
+                    },
+                    hisGuests: null,
+                  },
+                ]
+              : [],
+        };
+      }
+
+      SystemMessage.hostShareCounterData({ ...prev });
+
+      return { ...prev };
+    });
+  };
 
   useEffect(() => {
     if (iframeRef && screen.dimensionId && user.cGAccessToken) {
@@ -261,6 +357,8 @@ export default function MeetingScreen({
       var socketBase = "https://portal.chickchack.net:7005/";
       var storageBase = "https://chickchack.s3.eu-west-2.amazonaws.com"
       var isProduct = false;
+      var isDeskHost = ${isHost ? true : false};
+      var deskId = "${deskId}";
 
       var buildUrl = '${toAbsoluteUrl(
         iframeRef.contentWindow.top.location.origin,
@@ -317,7 +415,19 @@ export default function MeetingScreen({
               iframeRef.contentWindow.platform,
             );
 
-            iframeRef.contentWindow.loading.style.display = "none";
+            iframeRef.contentWindow.onResponseInputRecived = (counter) => {
+              console.log(
+                "/////////////////////////////// call from unity counter",
+                counter,
+              );
+              setCounterFromUnity(counter);
+            };
+
+            iframeRef.contentWindow.updateDimensionFrames = (frames) => {
+              setFrames(frames);
+            };
+
+            // iframeRef.contentWindow.loading.style.display = "none";
             iframeRef.contentWindow.unityInstance = unityInstance;
             iframeRef.contentWindow.web3 = window.web3;
             iframeRef.contentWindow.ethereum = window.ethereum;
@@ -333,20 +443,11 @@ export default function MeetingScreen({
         toAbsoluteUrl(window.location.origin, "/new-WebGL/Build") +
         "/visit-dimension.loader.js";
 
-      loaderScript.onload = () => {
-        // if (window.navigator.geolocation) {
-        //   window.navigator.geolocation.getCurrentPosition((pos) => {
-        //     iframeRef.contentWindow.lat = pos.coords.latitude;
-        //     iframeRef.contentWindow.lon = pos.coords.longitude;
-
-        //     createUnityInstance();
-        //   });
-        // } else {
+      iframeRef.contentWindow.onload = () => {
         iframeRef.contentWindow.lat = 25.0418278;
         iframeRef.contentWindow.lon = 55.2513757;
 
         createUnityInstance();
-        // }
       };
 
       iframeRef.contentWindow.document.body.append(div);
@@ -355,6 +456,7 @@ export default function MeetingScreen({
       iframeRef.contentWindow.document.head.append(loaderScript);
       iframeRef.contentWindow.document.body.append(style);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, iframeRef, user.cGAccessToken]);
 
   useEffect(() => {
@@ -377,7 +479,8 @@ export default function MeetingScreen({
       joinedSharedDim ||
       sharingWhiteboard ||
       sharingFile ||
-      sharingScreen
+      sharingScreen ||
+      screen.type === "desk"
     ) {
       setControlSettingsShow(true);
     }
@@ -387,6 +490,7 @@ export default function MeetingScreen({
     sharingWhiteboard,
     sharingFile,
     sharingScreen,
+    screen.type,
   ]);
 
   if (!screen) {
@@ -396,6 +500,172 @@ export default function MeetingScreen({
   if (screen.type === "dim") {
     return (
       <section className={mainFullScreen ? "main-screen-full" : "main-screen"}>
+        {mainFullScreen ? (
+          <Row wrap={false} className="h-100">
+            <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
+              <Row wrap={false} className="h-100">
+                <Col>
+                  <div className="full-screen-asider-navigate">
+                    <MeetNavigateSide
+                      isHost={isHost}
+                      activeBtn={activeBtn}
+                      setActiveBtn={setActiveBtn}
+                      setHideSide={setHideSide}
+                      sharedDimId={sharedDimId}
+                      askedForCounter={askedForCounter}
+                    />
+                  </div>
+                </Col>
+
+                {!hideSide && (screenSize.xl || screenSize.xxl) && (
+                  <Col flex={1} className="virtual-support-aside-hide h-100">
+                    <div
+                      style={{ padding: "24px 1rem", background: "#f2f2f7e6" }}
+                      className="h-100"
+                    >
+                      <MeetAsaider
+                        isHost={isHost}
+                        chatLoading={!chatRoomId}
+                        messages={messages}
+                        sendMessage={sendMessage}
+                        participants={participants}
+                        activeBtn={activeBtn}
+                        setActiveBtn={setActiveBtn}
+                        SystemMessage={SystemMessage}
+                        shareWhiteboard={shareWhiteboard}
+                        permissions={permissions}
+                        sharedFiles={sharedFiles}
+                        setSharedFiles={setSharedFiles}
+                        sharedDimId={sharedDimId}
+                        sharingDimId={sharingDimId}
+                        unPublishScreen={unPublishScreen}
+                        publishScreen={publishScreen}
+                        sharingScreen={localScreenTrack?.enabled}
+                        sharingDim={!!sharingDimId}
+                        sharingFile={!!sharingFile}
+                        sharingWhiteboard={!!fastboard}
+                        setHideSide={setHideSide}
+                        fastboard={fastboard}
+                        joinedSharedDim={joinedSharedDim}
+                        setJoinedSharedDim={setJoinedSharedDim}
+                        setAskedForCounter={setAskedForCounter}
+                        counterFormData={counterFormData}
+                        counterSharedData={counterSharedData}
+                        iframeRef={iframeRef}
+                      />
+                    </div>
+                  </Col>
+                )}
+              </Row>
+            </Col>
+            <Col flex={1}>
+              <iframe
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                }}
+                title="Explore Metaverse"
+                ref={setIframeRef}
+              >
+                {iframeRef?.contentWindow?.document?.body &&
+                  createPortal(
+                    <>
+                      <div id="unity-container">
+                        <div id="canvas-wrap">
+                          <div id="rpm-container">
+                            <iframe
+                              title="rpm-frame"
+                              id="rpm-frame"
+                              className="rpm-frame"
+                              allow="camera *; microphone *"
+                            ></iframe>
+                            <button id="rpm-hide-button" onClick="hideRpm()">
+                              Hide
+                            </button>
+                          </div>
+                          <canvas
+                            ref={setUnityCanvas}
+                            id="unity-canvas"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                            }}
+                          ></canvas>
+                        </div>
+                      </div>
+                      <canvas
+                        id="inMem_Canvas"
+                        height="450"
+                        width="450"
+                        style={{ display: "none" }}
+                      ></canvas>
+                      <canvas
+                        id="myCanvas"
+                        height="450"
+                        width="450"
+                        style={{ display: "none" }}
+                      ></canvas>
+                    </>,
+                    iframeRef?.contentWindow?.document?.body,
+                  )}
+              </iframe>
+            </Col>
+          </Row>
+        ) : (
+          <iframe
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+            title="Explore Metaverse"
+            ref={setIframeRef}
+          >
+            {iframeRef?.contentWindow?.document?.body &&
+              createPortal(
+                <>
+                  <div id="unity-container">
+                    <div id="canvas-wrap">
+                      <div id="rpm-container">
+                        <iframe
+                          title="rpm-frame"
+                          id="rpm-frame"
+                          className="rpm-frame"
+                          allow="camera *; microphone *"
+                        ></iframe>
+                        <button id="rpm-hide-button" onClick="hideRpm()">
+                          Hide
+                        </button>
+                      </div>
+                      <canvas
+                        ref={setUnityCanvas}
+                        id="unity-canvas"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      ></canvas>
+                    </div>
+                  </div>
+                  <canvas
+                    id="inMem_Canvas"
+                    height="450"
+                    width="450"
+                    style={{ display: "none" }}
+                  ></canvas>
+                  <canvas
+                    id="myCanvas"
+                    height="450"
+                    width="450"
+                    style={{ display: "none" }}
+                  ></canvas>
+                </>,
+                iframeRef?.contentWindow?.document?.body,
+              )}
+          </iframe>
+        )}
+
         {dragData.dragging && (
           <div
             onDragOver={(e) => e.preventDefault()}
@@ -406,99 +676,241 @@ export default function MeetingScreen({
           </div>
         )}
 
-        <div className="whiteboard-top">
-          <Row justify="space-between" align="middle">
-            <Col>
-              <div
-                className="whiteboard-close clickable"
-                onClick={toggleFullScreen}
-              >
-                <FullScreenImageSVG
-                  color="#fff"
-                  style={{ width: "12px", height: "12px" }}
-                  className="close-whiteboard"
-                />
-              </div>
-            </Col>
-            <Col>
-              <div
-                className="whiteboard-close clickable"
-                onClick={() =>
-                  isHost
-                    ? SystemMessage.stopDim()
-                    : setJoinedSharedDim(!joinedSharedDim)
-                }
-              >
-                <CloseSVG
-                  color="#fff"
-                  style={{ width: "12px", height: "12px" }}
-                  className="close-whiteboard"
-                />
-              </div>
-            </Col>
-          </Row>
+        <div
+          className="whiteboard-fullscreen clickable"
+          onClick={toggleFullScreen}
+        >
+          <FullScreenImageSVG
+            color="#fff"
+            style={{ width: "12px", height: "12px" }}
+            className="close-whiteboard"
+          />
         </div>
 
-        <iframe
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-          }}
-          title="Explore Metaverse"
-          ref={setIframeRef}
+        <div
+          className="whiteboard-close clickable"
+          onClick={() =>
+            isHost
+              ? SystemMessage.stopDim()
+              : setJoinedSharedDim(!joinedSharedDim)
+          }
         >
-          {iframeRef?.contentWindow?.document?.body &&
-            createPortal(
-              <>
-                <div id="unity-container">
-                  <div id="canvas-wrap">
-                    <div id="rpm-container">
-                      <iframe
-                        title="rpm-frame"
-                        id="rpm-frame"
-                        className="rpm-frame"
-                        allow="camera *; microphone *"
-                      ></iframe>
-                      <button id="rpm-hide-button" onClick="hideRpm()">
-                        Hide
-                      </button>
-                    </div>
-                    <canvas
-                      ref={setUnityCanvas}
-                      id="unity-canvas"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    ></canvas>
-                  </div>
-                </div>
-                <canvas
-                  id="inMem_Canvas"
-                  height="450"
-                  width="450"
-                  style={{ display: "none" }}
-                ></canvas>
-                <canvas
-                  id="myCanvas"
-                  height="450"
-                  width="450"
-                  style={{ display: "none" }}
-                ></canvas>
-              </>,
-              iframeRef?.contentWindow?.document?.body,
-            )}
-        </iframe>
+          <CloseSVG
+            color="#fff"
+            style={{ width: "12px", height: "12px" }}
+            className="close-whiteboard"
+          />
+        </div>
 
         <div
-          className="main-screen-controls"
-          style={{
-            bottom: controlSettingsShow ? "-55px" : "0px",
-            background: "inital",
-            boxShadow: "inital",
-            backdropFilter: "inital",
-          }}
+          className={`main-screen-controls ${
+            controlSettingsShow && "main-screen-controls-hide"
+          }`}
+        >
+          <MeetingCallControls {...meetingControlsProps} />
+        </div>
+      </section>
+    );
+  } else if (screen.type === "desk") {
+    return (
+      <section
+        className={mainFullScreen ? "main-screen-full" : "main-screen"}
+        style={{ minHeight: "100%" }}
+      >
+        {mainFullScreen ? (
+          <Row wrap={false} className="h-100">
+            <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
+              <Row wrap={false} className="h-100">
+                <Col>
+                  <div className="full-screen-asider-navigate">
+                    <MeetNavigateSide
+                      isHost={isHost}
+                      activeBtn={activeBtn}
+                      setActiveBtn={setActiveBtn}
+                      setHideSide={setHideSide}
+                      sharedDimId={sharedDimId}
+                      askedForCounter={askedForCounter}
+                    />
+                  </div>
+                </Col>
+
+                {!hideSide && (screenSize.xl || screenSize.xxl) && (
+                  <Col flex={1} className="virtual-support-aside-hide h-100">
+                    <div
+                      style={{ padding: "24px 1rem", background: "#f2f2f7e6" }}
+                      className="h-100"
+                    >
+                      <MeetAsaider
+                        isHost={isHost}
+                        chatLoading={!chatRoomId}
+                        messages={messages}
+                        sendMessage={sendMessage}
+                        participants={participants}
+                        activeBtn={activeBtn}
+                        setActiveBtn={setActiveBtn}
+                        SystemMessage={SystemMessage}
+                        shareWhiteboard={shareWhiteboard}
+                        permissions={permissions}
+                        sharedFiles={sharedFiles}
+                        setSharedFiles={setSharedFiles}
+                        sharedDimId={sharedDimId}
+                        sharingDimId={sharingDimId}
+                        unPublishScreen={unPublishScreen}
+                        publishScreen={publishScreen}
+                        sharingScreen={localScreenTrack?.enabled}
+                        sharingDim={!!sharingDimId}
+                        sharingFile={!!sharingFile}
+                        sharingWhiteboard={!!fastboard}
+                        setHideSide={setHideSide}
+                        fastboard={fastboard}
+                        joinedSharedDim={joinedSharedDim}
+                        setJoinedSharedDim={setJoinedSharedDim}
+                        setAskedForCounter={setAskedForCounter}
+                        counterFormData={counterFormData}
+                        counterSharedData={counterSharedData}
+                        iframeRef={iframeRef}
+                      />
+                    </div>
+                  </Col>
+                )}
+              </Row>
+            </Col>
+            <Col flex={1}>
+              <iframe
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                }}
+                title="Explore Desk"
+                ref={setIframeRef}
+              >
+                {iframeRef?.contentWindow?.document?.body &&
+                  createPortal(
+                    <>
+                      <div id="unity-container">
+                        <div id="canvas-wrap">
+                          <div id="rpm-container">
+                            <iframe
+                              title="desk"
+                              id="rpm-frame"
+                              class="rpm-frame"
+                              allow="camera *; microphone *"
+                            ></iframe>
+                            <button id="rpm-hide-button" onclick="hideRpm()">
+                              Hide
+                            </button>
+                          </div>
+                          <canvas
+                            id="unity-canvas"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                            }}
+                          ></canvas>
+                        </div>
+                      </div>
+                      <canvas
+                        id="inMem_Canvas"
+                        height="450"
+                        width="450"
+                        style={{ display: "none" }}
+                      ></canvas>
+                      <canvas
+                        id="myCanvas"
+                        height="450"
+                        width="450"
+                        style={{ display: "none" }}
+                      ></canvas>
+                    </>,
+                    iframeRef?.contentWindow?.document?.body,
+                  )}
+              </iframe>
+            </Col>
+          </Row>
+        ) : (
+          <iframe
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+            title="Explore Desk"
+            ref={setIframeRef}
+          >
+            {iframeRef?.contentWindow?.document?.body &&
+              createPortal(
+                <>
+                  <div id="unity-container">
+                    <div id="canvas-wrap">
+                      <div id="rpm-container">
+                        <iframe
+                          title="desk"
+                          id="rpm-frame"
+                          class="rpm-frame"
+                          allow="camera *; microphone *"
+                        ></iframe>
+                        <button id="rpm-hide-button" onclick="hideRpm()">
+                          Hide
+                        </button>
+                      </div>
+                      <canvas
+                        id="unity-canvas"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      ></canvas>
+                    </div>
+                  </div>
+                  <canvas
+                    id="inMem_Canvas"
+                    height="450"
+                    width="450"
+                    style={{ display: "none" }}
+                  ></canvas>
+                  <canvas
+                    id="myCanvas"
+                    height="450"
+                    width="450"
+                    style={{ display: "none" }}
+                  ></canvas>
+                </>,
+                iframeRef?.contentWindow?.document?.body,
+              )}
+          </iframe>
+        )}
+
+        <div
+          className="whiteboard-fullscreen clickable"
+          onClick={toggleFullScreen}
+        >
+          <FullScreenImageSVG
+            color="#fff"
+            style={{ width: "12px", height: "12px" }}
+            className="close-whiteboard"
+          />
+        </div>
+
+        {/* <div
+          className="whiteboard-close clickable"
+          onClick={() =>
+            isHost
+              ? SystemMessage.stopDim()
+              : setJoinedSharedDim(!joinedSharedDim)
+          }
+        >
+          <CloseSVG
+            color="#fff"
+            style={{ width: "12px", height: "12px" }}
+            className="close-whiteboard"
+          />
+        </div> */}
+
+        <div
+          className={`main-screen-controls ${
+            controlSettingsShow && "main-screen-controls-hide"
+          }`}
         >
           <MeetingCallControls {...meetingControlsProps} />
         </div>
@@ -521,62 +933,130 @@ export default function MeetingScreen({
           </div>
         )}
 
-        <div className="whiteboard-top">
-          <Row justify="space-between" align="middle">
-            <Col>
-              <div
-                className="whiteboard-close clickable"
-                onClick={toggleFullScreen}
-              >
-                <FullScreenImageSVG
-                  color="#fff"
-                  style={{ width: "12px", height: "12px" }}
-                  className="close-whiteboard"
-                />
+        <div
+          className="whiteboard-fullscreen clickable"
+          onClick={toggleFullScreen}
+        >
+          <FullScreenImageSVG
+            color="#fff"
+            style={{ width: "12px", height: "12px" }}
+            className="close-whiteboard"
+          />
+        </div>
+
+        {isHost && (
+          <div
+            className="whiteboard-close clickable"
+            onClick={SystemMessage.stopFilePreview}
+          >
+            <CloseSVG
+              color="#fff"
+              style={{ width: "12px", height: "12px" }}
+              className="close-whiteboard"
+            />
+          </div>
+        )}
+
+        {mainFullScreen ? (
+          <Row wrap={false} className="w-100 h-100">
+            <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
+              <Row wrap={false} className="h-100">
+                <Col>
+                  <div className="full-screen-asider-navigate">
+                    <MeetNavigateSide
+                      isHost={isHost}
+                      activeBtn={activeBtn}
+                      setActiveBtn={setActiveBtn}
+                      setHideSide={setHideSide}
+                      sharedDimId={sharedDimId}
+                      askedForCounter={askedForCounter}
+                    />
+                  </div>
+                </Col>
+
+                {!hideSide && (screenSize.xl || screenSize.xxl) && (
+                  <Col flex={1} className="virtual-support-aside-hide h-100">
+                    <div
+                      style={{ padding: "24px 1rem", background: "#f2f2f7e6" }}
+                      className="h-100"
+                    >
+                      <MeetAsaider
+                        isHost={isHost}
+                        chatLoading={!chatRoomId}
+                        messages={messages}
+                        sendMessage={sendMessage}
+                        participants={participants}
+                        activeBtn={activeBtn}
+                        setActiveBtn={setActiveBtn}
+                        SystemMessage={SystemMessage}
+                        shareWhiteboard={shareWhiteboard}
+                        permissions={permissions}
+                        sharedFiles={sharedFiles}
+                        setSharedFiles={setSharedFiles}
+                        sharedDimId={sharedDimId}
+                        sharingDimId={sharingDimId}
+                        unPublishScreen={unPublishScreen}
+                        publishScreen={publishScreen}
+                        sharingScreen={localScreenTrack?.enabled}
+                        sharingDim={!!sharingDimId}
+                        sharingFile={!!sharingFile}
+                        sharingWhiteboard={!!fastboard}
+                        setHideSide={setHideSide}
+                        fastboard={fastboard}
+                        joinedSharedDim={joinedSharedDim}
+                        setJoinedSharedDim={setJoinedSharedDim}
+                        setAskedForCounter={setAskedForCounter}
+                        counterFormData={counterFormData}
+                        counterSharedData={counterSharedData}
+                        iframeRef={iframeRef}
+                      />
+                    </div>
+                  </Col>
+                )}
+              </Row>
+            </Col>
+            <Col flex={1}>
+              <div className="file-canvas" style={{ background: "#fff" }}>
+                {screen.file.isGoogleDrive ? (
+                  <iframe
+                    title="Google Drive Embed"
+                    style={{ width: "100%", height: "100%" }}
+                    src={screen.file.embedUrl}
+                  />
+                ) : (
+                  <FileViewer
+                    fileType={getFileTypeFromMimeType(screen.file.type)}
+                    filePath={screen.file.url}
+                    errorComponent={<h1>Error previewing the file</h1>}
+                    onError={(err) => console.log("FileViewer error:", err)}
+                  />
+                )}
               </div>
             </Col>
-            <Col>
-              {isHost && (
-                <div
-                  className="whiteboard-close clickable"
-                  onClick={SystemMessage.stopFilePreview}
-                >
-                  <CloseSVG
-                    color="#fff"
-                    style={{ width: "12px", height: "12px" }}
-                    className="close-whiteboard"
-                  />
-                </div>
-              )}
-            </Col>
           </Row>
-        </div>
-
-        <div className="file-canvas">
-          {screen.file.isGoogleDrive ? (
-            <iframe
-              title="Google Drive Embed"
-              style={{ width: "100%", height: "100%" }}
-              src={screen.file.embedUrl}
-            />
-          ) : (
-            <FileViewer
-              fileType={getFileTypeFromMimeType(screen.file.type)}
-              filePath={screen.file.url}
-              errorComponent={<h1>Error previewing the file</h1>}
-              onError={(err) => console.log("FileViewer error:", err)}
-            />
-          )}
-        </div>
+        ) : (
+          <div className="file-canvas">
+            {screen.file.isGoogleDrive ? (
+              <iframe
+                title="Google Drive Embed"
+                style={{ width: "100%", height: "100%" }}
+                src={screen.file.embedUrl}
+              />
+            ) : (
+              <FileViewer
+                fileType={getFileTypeFromMimeType(screen.file.type)}
+                filePath={screen.file.url}
+                errorComponent={<h1>Error previewing the file</h1>}
+                onError={(err) => console.log("FileViewer error:", err)}
+              />
+            )}
+          </div>
+        )}
 
         <div
-          className="main-screen-controls"
-          style={{
-            bottom: controlSettingsShow ? "-55px" : "0px",
-            background: "inital",
-            boxShadow: "inital",
-            backdropFilter: "inital",
-          }}
+          className={`main-screen-controls ${
+            controlSettingsShow && "main-screen-controls-hide"
+          }`}
         >
           <MeetingCallControls {...meetingControlsProps} />
         </div>
@@ -589,7 +1069,74 @@ export default function MeetingScreen({
           mainFullScreen ? "main-screen-full" : "main-screen whiteboard-screen"
         }
       >
-        <div ref={setWhiteboardContainer} className="whiteboard-canvas"></div>
+        {mainFullScreen ? (
+          <Row wrap={false} className="w-100 h-100">
+            <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
+              <Row wrap={false} className="h-100">
+                <Col>
+                  <div className="full-screen-asider-navigate">
+                    <MeetNavigateSide
+                      isHost={isHost}
+                      activeBtn={activeBtn}
+                      setActiveBtn={setActiveBtn}
+                      setHideSide={setHideSide}
+                      sharedDimId={sharedDimId}
+                      askedForCounter={askedForCounter}
+                    />
+                  </div>
+                </Col>
+
+                {!hideSide && (screenSize.xl || screenSize.xxl) && (
+                  <Col flex={1} className="virtual-support-aside-hide h-100">
+                    <div
+                      style={{ padding: "24px 1rem", background: "#f2f2f7e6" }}
+                      className="h-100"
+                    >
+                      <MeetAsaider
+                        isHost={isHost}
+                        chatLoading={!chatRoomId}
+                        messages={messages}
+                        sendMessage={sendMessage}
+                        participants={participants}
+                        activeBtn={activeBtn}
+                        setActiveBtn={setActiveBtn}
+                        SystemMessage={SystemMessage}
+                        shareWhiteboard={shareWhiteboard}
+                        permissions={permissions}
+                        sharedFiles={sharedFiles}
+                        setSharedFiles={setSharedFiles}
+                        sharedDimId={sharedDimId}
+                        sharingDimId={sharingDimId}
+                        unPublishScreen={unPublishScreen}
+                        publishScreen={publishScreen}
+                        sharingScreen={localScreenTrack?.enabled}
+                        sharingDim={!!sharingDimId}
+                        sharingFile={!!sharingFile}
+                        sharingWhiteboard={!!fastboard}
+                        setHideSide={setHideSide}
+                        fastboard={fastboard}
+                        joinedSharedDim={joinedSharedDim}
+                        setJoinedSharedDim={setJoinedSharedDim}
+                        setAskedForCounter={setAskedForCounter}
+                        counterFormData={counterFormData}
+                        counterSharedData={counterSharedData}
+                        iframeRef={iframeRef}
+                      />
+                    </div>
+                  </Col>
+                )}
+              </Row>
+            </Col>
+            <Col flex={1}>
+              <div
+                ref={setWhiteboardContainer}
+                className="whiteboard-canvas"
+              ></div>
+            </Col>
+          </Row>
+        ) : (
+          <div ref={setWhiteboardContainer} className="whiteboard-canvas"></div>
+        )}
 
         {dragData.dragging && (
           <div
@@ -601,45 +1148,34 @@ export default function MeetingScreen({
           </div>
         )}
 
-        <div className="whiteboard-top">
-          <Row justify="space-between" align="middle">
-            <Col>
-              <div
-                className="whiteboard-close clickable"
-                onClick={toggleFullScreen}
-              >
-                <FullScreenImageSVG
-                  color="#fff"
-                  style={{ width: "12px", height: "12px" }}
-                  className="close-whiteboard"
-                />
-              </div>
-            </Col>
-            <Col>
-              {isHost && (
-                <div
-                  className="whiteboard-close clickable"
-                  onClick={SystemMessage.stopWhiteboard}
-                >
-                  <CloseSVG
-                    color="#fff"
-                    style={{ width: "12px", height: "12px" }}
-                    className="close-whiteboard"
-                  />
-                </div>
-              )}
-            </Col>
-          </Row>
+        <div
+          className="whiteboard-fullscreen clickable"
+          onClick={toggleFullScreen}
+        >
+          <FullScreenImageSVG
+            color="#fff"
+            style={{ width: "12px", height: "12px" }}
+            className="close-whiteboard"
+          />
         </div>
 
+        {isHost && (
+          <div
+            className="whiteboard-close clickable"
+            onClick={SystemMessage.stopWhiteboard}
+          >
+            <CloseSVG
+              color="#fff"
+              style={{ width: "12px", height: "12px" }}
+              className="close-whiteboard"
+            />
+          </div>
+        )}
+
         <div
-          className="main-screen-controls"
-          style={{
-            bottom: controlSettingsShow ? "-55px" : "0px",
-            background: "inital",
-            boxShadow: "inital",
-            backdropFilter: "inital",
-          }}
+          className={`main-screen-controls ${
+            controlSettingsShow && "main-screen-controls-hide"
+          }`}
         >
           <MeetingCallControls {...meetingControlsProps} />
         </div>
@@ -652,25 +1188,16 @@ export default function MeetingScreen({
           <div id={screen.screenId} className="video-player"></div>
         )}
 
-        {sharingScreen && (
-          <div className="whiteboard-top">
-            <Row justify="space-between" align="middle">
-              <Col></Col>
-              <Col>
-                {isHost && (
-                  <div
-                    className="whiteboard-close clickable"
-                    onClick={() => unPublishScreen()}
-                  >
-                    <CloseSVG
-                      color="#fff"
-                      style={{ width: "12px", height: "12px" }}
-                      className="close-whiteboard"
-                    />
-                  </div>
-                )}
-              </Col>
-            </Row>
+        {sharingScreen && isHost && (
+          <div
+            className="whiteboard-close clickable"
+            onClick={() => unPublishScreen()}
+          >
+            <CloseSVG
+              color="#fff"
+              style={{ width: "12px", height: "12px" }}
+              className="close-whiteboard"
+            />
           </div>
         )}
 
@@ -685,7 +1212,9 @@ export default function MeetingScreen({
         )}
 
         <div
-          className="main-screen-controls"
+          className={`main-screen-controls ${
+            controlSettingsShow && "main-screen-controls-hide"
+          }`}
           style={{
             bottom: sharingScreen && controlSettingsShow ? "-55px" : "0px",
             background: sharingScreen ? "inital" : "none",
@@ -695,15 +1224,6 @@ export default function MeetingScreen({
         >
           <MeetingCallControls {...meetingControlsProps} />
         </div>
-        <div
-          className="main-screen-controls"
-          style={{
-            bottom: controlSettingsShow ? "-55px" : "0px",
-            background: "inital",
-            boxShadow: "inital",
-            backdropFilter: "inital",
-          }}
-        ></div>
 
         {screen.type === "rtc" && (
           <span className="friend-screen-sound">

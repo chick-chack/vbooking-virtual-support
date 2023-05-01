@@ -6,9 +6,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import {
-  Avatar,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import {
   Col,
   Dropdown,
   Grid,
@@ -17,7 +21,6 @@ import {
   message,
   notification,
   Row,
-  Tooltip,
   Typography,
 } from "antd";
 import AgoraRTC from "agora-rtc-sdk-ng";
@@ -29,25 +32,14 @@ import SocialEventService from "services/social-event.service";
 import CommonService from "services/common.service";
 import CustomSlider from "components/CustomSlider";
 import logo from "assets/images/logo.png";
-import hologram from "assets/images/3d-hologram.png";
-import {
-  ParticipantsSVG,
-  PackageSVG,
-  ShoppingCartSVG,
-  LinkSVG,
-  AddUserSVG,
-  SMSSVG,
-  ToolsSVG,
-  FileSVG,
-  CounterSVG,
-  ShareDimenstionSVG,
-  AlbumsSVG,
-  VirtualMeetSVG,
-} from "assets/jsx-svg";
+import { ParticipantsSVG, LinkSVG, AddUserSVG } from "assets/jsx-svg";
 
 import MeetingScreen from "./MeetingScreen";
 import MeetAsaider from "./MeetAsaider";
 import InviteFriends from "./InviteFriends";
+import HolomeetDim from "./HolomeetDim";
+import MeetNavigateSide from "./MeetNavigateSide";
+
 import { LoadingOutlined } from "@ant-design/icons";
 
 import "./styles.css";
@@ -86,6 +78,7 @@ export default function VirtualSupportView({
   startMicMuted,
   startCamActive,
 }) {
+  const location = useLocation();
   const [meeting, setMeeting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeBtn, setActiveBtn] = useState("participant");
@@ -117,11 +110,17 @@ export default function VirtualSupportView({
   const [askedForCounter, setAskedForCounter] = useState(false);
   const [counterFormData, setCounterFormData] = useState(null);
   const [counterSharedData, setCounterSharedData] = useState({});
+  const [sharedHolomeetId, setSharedHolomeetId] = useState(null);
+  const [dimensionFrames, setDimensionFrames] = useState(null);
+  const [deskType, setDeskType] = useState("");
+  const [iframeRef, setIframeRef] = useState(null);
 
   const { user } = useContext(userContext);
   const joinTriesRef = useRef(1);
   const soundMutedRef = useRef();
   const { meetingId } = useParams();
+  const [searchParams] = useSearchParams();
+
   const navigate = useNavigate();
 
   const userRef = useRef(user);
@@ -354,6 +353,10 @@ export default function VirtualSupportView({
     [sharedDimId],
   );
 
+  const deskScreenObj = useMemo(() => {
+    return { type: "desk", dimensionId: meeting?.dimensionId };
+  }, [meeting?.dimensionId]);
+
   const whiteboardScreenObj = useMemo(
     () => ({ type: "whiteboard", room: fastboard }),
     [fastboard],
@@ -518,7 +521,9 @@ export default function VirtualSupportView({
         setSharingFile(file);
         sendMessage(
           formatSystemMsg(
-            `PREVIEWFILE%%%${userRef.current.id}%%%${JSON.stringify(file)}`,
+            `PREVIEWFILE%%%${userRef.current.id}%%%${JSON.stringify(
+              file,
+            )}%%%${meetingId}`,
           ),
         );
       },
@@ -526,28 +531,38 @@ export default function VirtualSupportView({
       shareDim: (dimId) => {
         setSharingDimId(dimId);
         sendMessage(
-          formatSystemMsg(`SHAREDIM%%%${userRef.current.id}%%%${dimId}`),
+          formatSystemMsg(
+            `SHAREDIM%%%${userRef.current.id}%%%${dimId}%%%${meetingId}`,
+          ),
         );
       },
 
       shareWhiteboard: (whiteboardRoomId) =>
         sendMessage(
           formatSystemMsg(
-            `SHAREWHITEBOARD%%%${userRef.current.id}%%%${whiteboardRoomId}`,
+            `SHAREWHITEBOARD%%%${userRef.current.id}%%%${whiteboardRoomId}%%%${meetingId}`,
           ),
         ),
 
       changePermissions: (permissions) =>
         sendMessage(
-          formatSystemMsg(`PERMISSIONS%%%${JSON.stringify(permissions)}`),
+          formatSystemMsg(
+            `PERMISSIONS%%%${JSON.stringify(permissions)}%%%${meetingId}`,
+          ),
         ),
 
       changeSharedFiles: (files) =>
-        sendMessage(formatSystemMsg(`SHAREDFILES%%%${JSON.stringify(files)}`)),
+        sendMessage(
+          formatSystemMsg(
+            `SHAREDFILES%%%${JSON.stringify(files)}%%%${meetingId}`,
+          ),
+        ),
 
       hostShareCounterData: (data) => {
         sendMessage(
-          formatSystemMsg(`COUNTERHOSTSENDDATA%%%${JSON.stringify(data)}`),
+          formatSystemMsg(
+            `COUNTERHOSTSENDDATA%%%${JSON.stringify(data)}%%%${meetingId}`,
+          ),
         );
       },
 
@@ -564,13 +579,15 @@ export default function VirtualSupportView({
               fullName,
             )}%%%${JSON.stringify(signature)}%%%${JSON.stringify(
               file,
-            )}%%%${JSON.stringify(customField)}`,
+            )}%%%${JSON.stringify(customField)}%%%${meetingId}`,
           ),
         ),
 
       stopFilePreview: () => {
         setSharingFile(null);
-        sendMessage(formatSystemMsg("ENDFILEPREVIEW"));
+        sendMessage(
+          formatSystemMsg(`ENDFILEPREVIEW%%%${meetingId}%%%${meetingId}`),
+        );
       },
 
       stopWhiteboard: () => {
@@ -585,21 +602,26 @@ export default function VirtualSupportView({
 
           return null;
         });
-        sendMessage(formatSystemMsg("ENDWHITEBOARD"));
+        sendMessage(
+          formatSystemMsg(`ENDWHITEBOARD%%%${meetingId}%%%${meetingId}`),
+        );
       },
 
       stopDim: () => {
         unPublishDim();
         setSharingDimId(null);
-        sendMessage(formatSystemMsg("ENDDIM"));
+        sendMessage(formatSystemMsg(`ENDDIM%%%${meetingId}%%%${meetingId}`));
       },
 
-      endMeeting: () => sendMessage(formatSystemMsg("ENDMEETING")),
+      endMeeting: () =>
+        sendMessage(formatSystemMsg(`ENDMEETING%%%${meetingId}`)),
 
       askAllUserForCounter: (dataAskedFor) => {
         sendMessage(
           formatSystemMsg(
-            `ASKALLUSERFORCOUNTER%%%${JSON.stringify(dataAskedFor)}`,
+            `ASKALLUSERFORCOUNTER%%%${JSON.stringify(
+              dataAskedFor,
+            )}%%%${meetingId}`,
           ),
         );
       },
@@ -609,9 +631,46 @@ export default function VirtualSupportView({
           formatSystemMsg(
             `ASKELECTEDUSERSFORCOUNTER%%%${JSON.stringify(
               usersAndDataAskedFor,
-            )}`,
+            )}%%%${meetingId}`,
           ),
         );
+      },
+
+      setHolomeet: (holomeetId = null) => {
+        const defualtValueForPer = {
+          screen: false,
+          chat: true,
+          mic: true,
+          cam: true,
+          whiteboard: true,
+          canDownload: true,
+        };
+        const closeAllPer = {
+          screen: false,
+          chat: false,
+          mic: false,
+          cam: false,
+          whiteboard: false,
+          canDownload: false,
+        };
+        setSharedHolomeetId(holomeetId);
+        sendMessage(
+          formatSystemMsg(
+            `SETHOLOMEET%%%${JSON.stringify(holomeetId)}%%%${meetingId}`,
+          ),
+        );
+        if (holomeetId) {
+          forceMuteMic();
+          unPublishCamera();
+          forceSoundMute();
+          SystemMessage.changePermissions(closeAllPer);
+          setPermissions(closeAllPer);
+        } else {
+          SystemMessage.changePermissions(defualtValueForPer);
+          setPermissions(defualtValueForPer);
+
+          toggleSoundMute();
+        }
       },
     };
   }, [sendMessage, unPublishDim]);
@@ -646,6 +705,7 @@ export default function VirtualSupportView({
           kind: "Plyr",
           label: "YouTube",
           onClick() {
+            setHideSide(false);
             setActiveBtn("youtubeLink");
           },
         },
@@ -653,14 +713,9 @@ export default function VirtualSupportView({
           icon: "https://png.pngtree.com/png-vector/20190514/ourmid/pngtree-emb--file-format-icon-design-png-image_1040671.jpg",
           kind: "EmbeddedPage",
           label: "Embed",
-          onClick(app) {
-            app.manager.addApp({
-              kind: "EmbeddedPage",
-              options: { title: "Embed" },
-              attributes: {
-                src: window.embed,
-              },
-            });
+          onClick() {
+            setHideSide(false);
+            setActiveBtn("embedLink");
           },
         },
       );
@@ -782,71 +837,111 @@ export default function VirtualSupportView({
   const handleSystemMsg = useCallback(
     (msg) => {
       if (msg.includes("ENDMEETING")) {
-        notification.info({
-          message: "Host has ended this meeting.",
-        });
-        navigate("/meetings");
+        const currentMeetId = msg.split("%%%")[2];
+
+        if (currentMeetId === meetingId) {
+          notification.info({
+            message: "Host has ended this meeting.",
+          });
+          navigate("/meetings");
+        }
       } else if (msg.includes("ENDFILEPREVIEW")) {
-        setSharingFile(null);
+        const currentMeetId = msg.split("%%%")[2];
+
+        if (currentMeetId === meetingId) {
+          setSharingFile(null);
+        }
       } else if (msg.includes("ENDWHITEBOARD")) {
-        setFastboard(null);
+        const currentMeetId = msg.split("%%%")[2];
+
+        if (currentMeetId === meetingId) {
+          setFastboard(null);
+        }
       } else if (msg.includes("ENDDIM")) {
-        setSharedDimId(null);
-        setJoinedSharedDim(false);
+        const currentMeetId = msg.split("%%%")[2];
+
+        if (currentMeetId === meetingId) {
+          setSharedDimId(null);
+          setJoinedSharedDim(false);
+        }
       } else if (msg.includes("SHAREWHITEBOARD")) {
         const whiteboardRoomId = msg.split("%%%")[3];
-        joinWhiteboardRoom(whiteboardRoomId);
-        notification.info({
-          message: "Host is sharing a whiteboard.",
-        });
+        const currentMeetId = msg.split("%%%")[4];
+
+        if (currentMeetId === meetingId) {
+          joinWhiteboardRoom(whiteboardRoomId);
+          notification.info({
+            message: "Host is sharing a whiteboard.",
+          });
+        }
       } else if (msg.includes("SHAREDIM")) {
         const dimId = msg.split("%%%")[3];
-        setSharedDimId(Number(dimId));
-        notification.info({
-          message:
-            'Host is sharing a dimension. Click "Join Dimension" to join the shared dimension.',
-        });
+        const currentMeetId = msg.split("%%%")[4];
+
+        if (currentMeetId === meetingId) {
+          setSharedDimId(Number(dimId));
+          notification.info({
+            message:
+              'Host is sharing a dimension. Click "Join Dimension" to join the shared dimension.',
+          });
+        }
       } else if (msg.includes("PERMISSIONS")) {
         try {
           const perms = JSON.parse(msg.split("%%%")[2]);
-          setPermissions(perms);
+          const currentMeetId = msg.split("%%%")[3];
+
+          if (currentMeetId === meetingId) {
+            setPermissions(perms);
+          }
         } catch (ignored) {}
       } else if (msg.includes("PREVIEWFILE")) {
         try {
           const file = JSON.parse(msg.split("%%%")[3]);
-          setSharingFile(file);
-          notification.info({
-            message: "Host is sharing a file.",
-          });
+          const currentMeetId = msg.split("%%%")[4];
+
+          if (currentMeetId === meetingId) {
+            setSharingFile(file);
+            notification.info({
+              message: "Host is sharing a file.",
+            });
+          }
         } catch (ignored) {}
       } else if (msg.includes("ASKALLUSERFORCOUNTER")) {
         try {
           if (!isHost) {
             const dataAskedFor = JSON.parse(msg.split("%%%")[2]);
-            setCounterFormData(dataAskedFor.formData);
+            const currentMeetId = msg.split("%%%")[3];
 
-            participants.forEach((participant) => {
-              if (participant.uid === user.id) {
-                notification.info({
-                  message: `Host is asked you to submit ${dataAskedFor.formData.message}.`,
-                });
-                setAskedForCounter(true);
-                setActiveBtn("userCounter");
-              }
-            });
+            if (currentMeetId === meetingId) {
+              setCounterFormData(dataAskedFor.formData);
+
+              participants.forEach((participant) => {
+                if (participant.uid === user.id) {
+                  notification.info({
+                    message: `Host is asked you to submit ${dataAskedFor.formData.message}.`,
+                  });
+                  setAskedForCounter(true);
+                  setActiveBtn("userCounter");
+                }
+              });
+            }
           }
         } catch (ignored) {}
       } else if (msg.includes("ASKELECTEDUSERSFORCOUNTER")) {
         try {
           if (!isHost) {
             const usersAndDataAskedFor = JSON.parse(msg.split("%%%")[2]);
-            setCounterFormData(usersAndDataAskedFor.formData);
-            if (usersAndDataAskedFor.users.includes(user.id)) {
-              notification.info({
-                message: `Host is asked you to submit ${usersAndDataAskedFor.formData.message}.`,
-              });
-              setAskedForCounter(true);
-              setActiveBtn("userCounter");
+            const currentMeetId = msg.split("%%%")[3];
+
+            if (currentMeetId === meetingId) {
+              setCounterFormData(usersAndDataAskedFor.formData);
+              if (usersAndDataAskedFor.users.includes(user.id)) {
+                notification.info({
+                  message: `Host is asked you to submit ${usersAndDataAskedFor.formData.message}.`,
+                });
+                setAskedForCounter(true);
+                setActiveBtn("userCounter");
+              }
             }
           }
         } catch (ignored) {}
@@ -857,49 +952,73 @@ export default function VirtualSupportView({
           const sharedSignature = JSON.parse(msg.split("%%%")[4]);
           const sharedfile = JSON.parse(msg.split("%%%")[5]);
           const sharedCustomField = JSON.parse(msg.split("%%%")[6]);
+          const currentMeetId = msg.split("%%%")[7];
 
-          setCounterSharedData((prev) => {
-            if (prev.hasOwnProperty(senderUser.id)) {
-              prev[senderUser.id].userData = senderUser;
+          if (currentMeetId === meetingId) {
+            setCounterSharedData((prev) => {
+              if (prev.hasOwnProperty(senderUser.id)) {
+                prev[senderUser.id].userData = senderUser;
 
-              if (sharedFullName) {
-                prev[senderUser.id].fullName = sharedFullName;
+                if (sharedFullName) {
+                  prev[senderUser.id].fullName = sharedFullName;
+                }
+                if (sharedSignature) {
+                  prev[senderUser.id].signature = sharedSignature;
+                }
+                if (sharedfile) {
+                  prev[senderUser.id].files = [
+                    ...prev[senderUser.id].files,
+                    sharedfile,
+                  ];
+                }
+
+                if (sharedCustomField) {
+                  prev[senderUser.id].customField = [
+                    ...prev[senderUser.id].customField,
+                    sharedCustomField,
+                  ];
+                }
+              } else {
+                prev[senderUser.id] = {
+                  userData: senderUser,
+                  fullName: sharedFullName,
+                  signature: sharedSignature,
+                  files: sharedfile ? [sharedfile] : [],
+                  customField: sharedCustomField ? [sharedCustomField] : [],
+                };
               }
-              if (sharedSignature) {
-                prev[senderUser.id].signature = sharedSignature;
-              }
-              if (sharedfile) {
-                prev[senderUser.id].files = [
-                  ...prev[senderUser.id].files,
-                  sharedfile,
-                ];
-              }
 
-              if (sharedCustomField) {
-                prev[senderUser.id].customField = [
-                  ...prev[senderUser.id].customField,
-                  sharedCustomField,
-                ];
-              }
-            } else {
-              prev[senderUser.id] = {
-                userData: senderUser,
-                fullName: sharedFullName,
-                signature: sharedSignature,
-                files: sharedfile ? [sharedfile] : [],
-                customField: sharedCustomField ? [sharedCustomField] : [],
-              };
-            }
+              SystemMessage.hostShareCounterData({ ...prev });
 
-            SystemMessage.hostShareCounterData({ ...prev });
-
-            return { ...prev };
-          });
+              return { ...prev };
+            });
+          }
         } catch (ignored) {}
       } else if (msg.includes("SHAREDFILES")) {
         try {
           const files = JSON.parse(msg.split("%%%")[2]);
-          setSharedFiles(files);
+          const currentMeetId = msg.split("%%%")[3];
+
+          if (currentMeetId === meetingId) {
+            setSharedFiles(files);
+          }
+        } catch (ignored) {}
+      } else if (msg.includes("SETHOLOMEET")) {
+        try {
+          const holomeetId = JSON.parse(msg.split("%%%")[2]);
+          const currentMeetId = msg.split("%%%")[3];
+
+          if (currentMeetId === meetingId) {
+            setSharedHolomeetId(Number(holomeetId));
+
+            if (holomeetId) {
+              notification.info({
+                message: "Host is sharing holomeet",
+              });
+              forceSoundMute();
+              toggleSoundMute();
+            }
+          }
         } catch (ignored) {}
       }
     },
@@ -986,14 +1105,28 @@ export default function VirtualSupportView({
     }
   }, [remoteUsers]);
 
+  const forceSoundMute = useCallback(async () => {
+    try {
+      remoteUsers.forEach((remoteUser) => {
+        if (remoteUser.hasAudio) {
+          remoteUser.audioTrack.stop();
+        }
+      });
+
+      setSoundMuted(true);
+    } catch (error) {
+      console.error(`Error muting video track: ${error.message}`);
+    }
+  }, [remoteUsers]);
+
   useEffect(() => {
     (async () => {
       if (user) {
         try {
           const { data: _meeting } = await SocialEventService.getMeetingInfo(
             meetingId,
+            location.pathname.includes("vindo-desk") && "desk",
           );
-
           if (_meeting) {
             agoraClient.current.removeAllListeners();
             agoraChatClient.current.removeEventHandler("connection&message");
@@ -1278,6 +1411,9 @@ export default function VirtualSupportView({
 
             setMeeting(_meeting);
             initMeeting(_meeting);
+            if (searchParams.get("type") === "desk") {
+              setDeskType("desk");
+            }
           } else {
             navigate("/meetings");
           }
@@ -1352,12 +1488,15 @@ export default function VirtualSupportView({
           let permissions = {};
           let sharedFiles = [];
           let counterSharedData = {};
+          let sharedHolomeetId = null;
 
           systemMessages.forEach(async (message) => {
+            console.warn(message);
             if (message.msg.includes("HOSTJOINED")) {
               shareFile = null;
               whiteboardRoomId = null;
               shareDim = null;
+              sharedHolomeetId = null;
             } else if (message.msg.includes("ENDFILEPREVIEW")) {
               shareFile = null;
             } else if (message.msg.includes("ENDWHITEBOARD")) {
@@ -1377,7 +1516,6 @@ export default function VirtualSupportView({
               } catch (ignored) {}
             } else if (message.msg.includes("COUNTERHOSTSENDDATA")) {
               try {
-                console.log("==========", message);
                 const sharedData = JSON.parse(message.msg.split("%%%")[2]);
                 counterSharedData = sharedData;
               } catch (ignored) {}
@@ -1391,12 +1529,25 @@ export default function VirtualSupportView({
                 const file = JSON.parse(message.msg.split("%%%")[3]);
                 shareFile = file;
               } catch (ignored) {}
+            } else if (message.msg.includes("SETHOLOMEET")) {
+              try {
+                const holomeetId = JSON.parse(message.msg.split("%%%")[2]);
+                sharedHolomeetId = holomeetId;
+              } catch (ignored) {}
             }
           });
 
-          // setPermissions(permissions);
+          if (isHost && sharedHolomeetId) {
+            SystemMessage.setHolomeet(null);
+            forceMuteMic();
+            unPublishCamera();
+            forceSoundMute();
+          }
+
+          setPermissions(permissions);
           setSharedFiles(sharedFiles);
           setCounterSharedData(counterSharedData);
+          setSharedHolomeetId(Number(sharedHolomeetId));
 
           const isHostPresent = participantsRef.current?.some(
             (p) => p.uid === meetingRef.current?.customerId,
@@ -1599,544 +1750,515 @@ export default function VirtualSupportView({
   );
 
   return (
-    <Row className="virtual-support" gutter={[32, 32]} justify="center">
-      <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
-        <Row wrap={false} className="h-100">
-          <Col
-            flex={hideSide && 1}
-            className="virtual-support-nav-sider-holder"
-          >
-            <div
-              className="virtual-support-nav-sider"
-              style={{ borderRadius: hideSide && "30px" }}
+    <>
+      <Row className="virtual-support" gutter={[32, 32]} justify="center">
+        <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
+          <Row wrap={false} className="h-100">
+            <Col
+              flex={hideSide && 1}
+              className="virtual-support-nav-sider-holder"
             >
-              <Row justify="start" align="middle" wrap={false}>
-                <Col>
-                  <Row justify="center">
-                    <Image
-                      preview={false}
-                      width={32}
-                      height={21}
-                      src={logo}
-                      className="clickable"
-                      onClick={() => setHideSide(false)}
-                    />
-                  </Row>
-                </Col>
-
-                <Col className="virtual-support-nav-sider-btns-wraper">
-                  <Row
-                    justify="space-between"
-                    align="middle"
-                    gutter={[
-                      { xs: 20, lg: 0 },
-                      { xs: 0, lg: 40 },
-                    ]}
-                    className="virtual-support-nav-sider-btns"
-                  >
-                    {/* For All users */}
-                    {[
-                      {
-                        id: "participant",
-                        title: "Participants",
-                        icon: ParticipantsSVG,
-                      },
-                      { id: "chat", title: "Chat", icon: SMSSVG },
-                    ].map((item) => (
-                      <Col key={item.id}>
-                        <Row
-                          justify="center"
-                          className={
-                            activeBtn === item.id && "sider-active-btn"
-                          }
-                        >
-                          <Tooltip title={item.title}>
-                            <item.icon
-                              className="clickable"
-                              onClick={() => {
-                                setHideSide(false);
-                                setActiveBtn(item.id);
-                              }}
-                            />
-                          </Tooltip>
-                        </Row>
-                      </Col>
-                    ))}
-
-                    {/* Not Host User Only */}
-                    {!isHost && (
-                      <>
-                        <Col>
-                          <Row
-                            justify="center"
-                            className={
-                              activeBtn === "myCart" && "sider-active-btn"
-                            }
-                          >
-                            <Tooltip title="My Cart">
-                              <ShoppingCartSVG
-                                className="clickable"
-                                style={{ width: "22px", height: "22px" }}
-                                color={"#c7c7cc"}
-                                onClick={() => {
-                                  setHideSide(false);
-                                  setActiveBtn("myCart");
-                                }}
-                              />
-                            </Tooltip>
-                          </Row>
-                        </Col>
-
-                        <Col>
-                          <Row
-                            justify="center"
-                            className={
-                              activeBtn === "sharedFiles" && "sider-active-btn"
-                            }
-                          >
-                            <Tooltip title="Shared Files">
-                              <FileSVG
-                                className="clickable"
-                                style={{ width: "22px", height: "22px" }}
-                                color={"#c7c7cc"}
-                                onClick={() => {
-                                  setHideSide(false);
-                                  setActiveBtn("sharedFiles");
-                                }}
-                              />
-                            </Tooltip>
-                          </Row>
-                        </Col>
-
-                        {!!sharedDimId && (
-                          <Col>
-                            <Row
-                              justify="center"
-                              className={
-                                activeBtn === "sharingDim" && "sider-active-btn"
-                              }
-                            >
-                              <Tooltip title="Join Dimension">
-                                <ShareDimenstionSVG
-                                  className="clickable"
-                                  style={{ width: "22px", height: "22px" }}
-                                  color={"#c7c7cc"}
-                                  onClick={() => {
-                                    setHideSide(false);
-                                    setActiveBtn("sharingDim");
-                                  }}
-                                />
-                              </Tooltip>
-                            </Row>
-                          </Col>
-                        )}
-
-                        {askedForCounter && (
-                          <Col>
-                            <Row
-                              justify="center"
-                              className={
-                                activeBtn === "userCounter" &&
-                                "sider-active-btn"
-                              }
-                            >
-                              <Tooltip title="Counter">
-                                <CounterSVG
-                                  className="clickable"
-                                  style={{ width: "22px", height: "22px" }}
-                                  color={"#c7c7cc"}
-                                  onClick={() => {
-                                    setHideSide(false);
-                                    setActiveBtn("userCounter");
-                                  }}
-                                />
-                              </Tooltip>
-                            </Row>
-                          </Col>
-                        )}
-                      </>
-                    )}
-
-                    {/* Host User Only */}
-                    {isHost && (
-                      <>
-                        {[
-                          {
-                            id: "inventory",
-                            title: "Inventory",
-                            icon: PackageSVG,
-                          },
-                          {
-                            id: "tools",
-                            title: "Sharing Tools",
-                            icon: ToolsSVG,
-                          },
-                          { id: "counter", title: "Counter", icon: CounterSVG },
-                          {
-                            id: "productionTools",
-                            title: "Production Tools",
-                            icon: AlbumsSVG,
-                          },
-                          {
-                            id: "counterUserSharedData",
-                            title: "Users Shared Data",
-                            icon: VirtualMeetSVG,
-                          },
-                          {
-                            id: "holomeet",
-                            title: "Holomeet",
-                            image: hologram,
-                          },
-                        ].map((item) => (
-                          <Col key={item.id}>
-                            <Row
-                              justify="center"
-                              className={
-                                activeBtn === item.id && "sider-active-btn"
-                              }
-                            >
-                              <Tooltip title={item.title}>
-                                {item.icon ? (
-                                  <item.icon
-                                    color="#c7c7cc"
-                                    className="clickable"
-                                    style={{
-                                      width: "24px",
-                                      height: "24px",
-                                    }}
-                                    onClick={() => {
-                                      setHideSide(false);
-                                      setActiveBtn(item.id);
-                                    }}
-                                  />
-                                ) : (
-                                  <Image
-                                    className="clickable"
-                                    preview={false}
-                                    width={24}
-                                    height={24}
-                                    src={item.image}
-                                    onClick={() => {
-                                      setHideSide(false);
-                                      setActiveBtn(item.id);
-                                    }}
-                                  />
-                                )}
-                              </Tooltip>
-                            </Row>
-                          </Col>
-                        ))}
-                      </>
-                    )}
-                  </Row>
-                </Col>
-
-                <Col className="virtual-support-avatar">
-                  <Avatar
-                    src={user.profileImage}
-                    size={40}
-                    style={{ objectFit: "cover" }}
-                  />
-                </Col>
-              </Row>
-            </div>
-          </Col>
-          {!hideSide && (screenSize.xl || screenSize.xxl) && (
-            <Col flex={1} className="virtual-support-aside-hide">
-              <div className="virtual-support-aside">
-                <MeetAsaider
+              <div
+                className="virtual-support-nav-sider"
+                style={{ borderRadius: hideSide && "30px" }}
+              >
+                <MeetNavigateSide
                   isHost={isHost}
-                  chatLoading={!chatRoomId}
-                  messages={messages}
-                  sendMessage={sendMessage}
-                  participants={participants}
                   activeBtn={activeBtn}
                   setActiveBtn={setActiveBtn}
-                  SystemMessage={SystemMessage}
-                  shareWhiteboard={shareWhiteboard}
-                  permissions={permissions}
-                  sharedFiles={sharedFiles}
-                  setSharedFiles={setSharedFiles}
-                  sharedDimId={sharedDimId}
-                  sharingDimId={sharingDimId}
-                  unPublishScreen={unPublishScreen}
-                  publishScreen={publishScreen}
-                  sharingScreen={localScreenTrack?.enabled}
-                  sharingDim={!!sharingDimId}
-                  sharingFile={!!sharingFile}
-                  sharingWhiteboard={!!fastboard}
                   setHideSide={setHideSide}
-                  fastboard={fastboard}
-                  joinedSharedDim={joinedSharedDim}
-                  setJoinedSharedDim={setJoinedSharedDim}
-                  setAskedForCounter={setAskedForCounter}
-                  counterFormData={counterFormData}
-                  counterSharedData={counterSharedData}
+                  sharedDimId={sharedDimId}
+                  askedForCounter={askedForCounter}
                 />
               </div>
             </Col>
-          )}
-        </Row>
-      </Col>
-
-      <Col
-        {...(hideSide
-          ? { flex: 1 }
-          : {
-              xs: 24,
-              md: 24,
-              xl: hideSide ? 22 : 16,
-              xxl: hideSide ? 22 : 16,
-            })}
-      >
-        <Row justify="center" gutter={[0, 20]} style={{ height: "100%" }}>
-          <Col xs={24} className="virtual-support-main">
-            <Row
-              align="middle"
-              justify="space-between"
-              style={{
-                marginBottom: "1rem",
-                borderBottom: "1px solid #E5E5EAD9",
-                padding: "24px 0",
-              }}
-            >
-              <Typography.Text className="fz-18 fw-600">Vindo</Typography.Text>
-              <Dropdown trigger={["click"]} overlay={inviteMenu}>
-                <Row
-                  align="middle"
-                  className="clickable"
-                  gutter={[8, 0]}
-                  id="inviteParticipants"
-                >
-                  <Col>
-                    <Row align="middle">
-                      <ParticipantsSVG
-                        style={{ width: "16px", height: "16px" }}
-                        color="#0129B7"
-                      />
-                    </Row>
-                  </Col>
-
-                  <Col>
-                    <Typography.Text className="fw-400 invite-gradiant-text">
-                      Invite Participant
-                    </Typography.Text>
-                  </Col>
-                </Row>
-              </Dropdown>
-            </Row>
-
-            <Row>
-              {otherScreens.length > 4 ? (
-                <Col xs={0} md={0} lg={24}>
-                  <CustomSlider responsive={slideResponsive}>
-                    {otherScreens.map((screen) => (
-                      <MeetingScreen
-                        key={screen.screenId}
-                        screen={screen}
-                        setMainScreen={setMainScreen}
-                      />
-                    ))}
-                  </CustomSlider>
-                </Col>
-              ) : (
-                <Col xs={24} md={24} lg={24}>
-                  <div className="friend-screen-container">
-                    {otherScreens.map((screen) => (
-                      <MeetingScreen
-                        key={screen.screenId}
-                        screen={screen}
-                        setMainScreen={setMainScreen}
-                      />
-                    ))}
-                  </div>
-                </Col>
-              )}
-            </Row>
-
-            {sharedDimId && joinedSharedDim ? (
-              <MeetingScreen
-                isMain
-                key={`${sharedDimId}_dim`}
-                screen={sharedDimScreenObj}
-                setMainScreen={setMainScreen}
-                publishDim={publishDim}
-                audioMuted={audioMuted}
-                soundMuted={soundMuted}
-                cameraEnabled={localVideoTrack?.enabled}
-                toggleAudioMute={toggleAudioMute}
-                toggleVideo={toggleVideo}
-                toggleSoundMute={toggleSoundMute}
-                publishScreen={publishScreen}
-                unPublishScreen={unPublishScreen}
-                sharingScreen={localScreenTrack?.enabled}
-                SystemMessage={SystemMessage}
-                unPublishDim={unPublishDim}
-                sharingDim={!!sharingDimId}
-                sharingFile={!!sharingFile}
-                sharingWhiteboard={!!fastboard}
-                isHost={isHost}
-                joinedSharedDim={joinedSharedDim}
-                setJoinedSharedDim={setJoinedSharedDim}
-                sharedDimId={sharedDimId}
-                permissions={permissions}
-                setPermissions={setPermissions}
-                setActiveBtn={setActiveBtn}
-              />
-            ) : !!sharingDimId ? (
-              <MeetingScreen
-                isMain
-                key={`${sharingDimId}_dim`}
-                screen={sharingDimScreenObj}
-                setMainScreen={setMainScreen}
-                publishDim={publishDim}
-                audioMuted={audioMuted}
-                soundMuted={soundMuted}
-                cameraEnabled={localVideoTrack?.enabled}
-                toggleAudioMute={toggleAudioMute}
-                toggleVideo={toggleVideo}
-                toggleSoundMute={toggleSoundMute}
-                publishScreen={publishScreen}
-                unPublishScreen={unPublishScreen}
-                sharingScreen={localScreenTrack?.enabled}
-                SystemMessage={SystemMessage}
-                unPublishDim={unPublishDim}
-                sharingDim={!!sharingDimId}
-                sharingFile={!!sharingFile}
-                sharingWhiteboard={!!fastboard}
-                isHost={isHost}
-                joinedSharedDim={joinedSharedDim}
-                setJoinedSharedDim={setJoinedSharedDim}
-                sharedDimId={sharedDimId}
-                permissions={permissions}
-                setPermissions={setPermissions}
-              />
-            ) : !!sharingFile ? (
-              <MeetingScreen
-                isMain
-                key={`${sharingFile.id}_file`}
-                screen={sharingFileScreenObj}
-                setMainScreen={setMainScreen}
-                publishDim={publishDim}
-                audioMuted={audioMuted}
-                soundMuted={soundMuted}
-                cameraEnabled={localVideoTrack?.enabled}
-                toggleAudioMute={toggleAudioMute}
-                toggleVideo={toggleVideo}
-                toggleSoundMute={toggleSoundMute}
-                publishScreen={publishScreen}
-                unPublishScreen={unPublishScreen}
-                sharingScreen={localScreenTrack?.enabled}
-                SystemMessage={SystemMessage}
-                unPublishDim={unPublishDim}
-                sharingDim={!!sharingDimId}
-                sharingFile={!!sharingFile}
-                sharingWhiteboard={!!fastboard}
-                isHost={isHost}
-                joinedSharedDim={joinedSharedDim}
-                setJoinedSharedDim={setJoinedSharedDim}
-                sharedDimId={sharedDimId}
-                permissions={permissions}
-                setPermissions={setPermissions}
-                setActiveBtn={setActiveBtn}
-              />
-            ) : !!fastboard ? (
-              <MeetingScreen
-                isMain
-                key={`${sharedDimId}_whiteboard`}
-                screen={whiteboardScreenObj}
-                setMainScreen={setMainScreen}
-                publishDim={publishDim}
-                audioMuted={audioMuted}
-                soundMuted={soundMuted}
-                cameraEnabled={localVideoTrack?.enabled}
-                toggleAudioMute={toggleAudioMute}
-                toggleVideo={toggleVideo}
-                toggleSoundMute={toggleSoundMute}
-                publishScreen={publishScreen}
-                unPublishScreen={unPublishScreen}
-                sharingScreen={localScreenTrack?.enabled}
-                SystemMessage={SystemMessage}
-                unPublishDim={unPublishDim}
-                sharingDim={!!sharingDimId}
-                sharingFile={!!sharingFile}
-                sharingWhiteboard={!!fastboard}
-                isHost={isHost}
-                joinedSharedDim={joinedSharedDim}
-                setJoinedSharedDim={setJoinedSharedDim}
-                sharedDimId={sharedDimId}
-                permissions={permissions}
-                setPermissions={setPermissions}
-                setActiveBtn={setActiveBtn}
-              />
-            ) : (
-              <MeetingScreen
-                isMain
-                key={mainScreen?.screenId}
-                screen={mainScreen}
-                setMainScreen={setMainScreen}
-                publishDim={publishDim}
-                audioMuted={audioMuted}
-                soundMuted={soundMuted}
-                cameraEnabled={localVideoTrack?.enabled}
-                toggleAudioMute={toggleAudioMute}
-                toggleVideo={toggleVideo}
-                toggleSoundMute={toggleSoundMute}
-                publishScreen={publishScreen}
-                unPublishScreen={unPublishScreen}
-                sharingScreen={localScreenTrack?.enabled}
-                SystemMessage={SystemMessage}
-                unPublishDim={unPublishDim}
-                sharingDim={!!sharingDimId}
-                sharingFile={!!sharingFile}
-                sharingWhiteboard={!!fastboard}
-                isHost={isHost}
-                joinedSharedDim={joinedSharedDim}
-                setJoinedSharedDim={setJoinedSharedDim}
-                sharedDimId={sharedDimId}
-                permissions={permissions}
-                setPermissions={setPermissions}
-                setActiveBtn={setActiveBtn}
-              />
+            {!hideSide && (screenSize.xl || screenSize.xxl) && (
+              <Col flex={1} className="virtual-support-aside-hide">
+                <div className="virtual-support-aside">
+                  <MeetAsaider
+                    isHost={isHost}
+                    chatLoading={!chatRoomId}
+                    messages={messages}
+                    sendMessage={sendMessage}
+                    participants={participants}
+                    activeBtn={activeBtn}
+                    setActiveBtn={setActiveBtn}
+                    SystemMessage={SystemMessage}
+                    shareWhiteboard={shareWhiteboard}
+                    permissions={permissions}
+                    sharedFiles={sharedFiles}
+                    setSharedFiles={setSharedFiles}
+                    sharedDimId={sharedDimId}
+                    sharingDimId={sharingDimId}
+                    unPublishScreen={unPublishScreen}
+                    publishScreen={publishScreen}
+                    sharingScreen={localScreenTrack?.enabled}
+                    sharingDim={!!sharingDimId}
+                    sharingFile={!!sharingFile}
+                    sharingWhiteboard={!!fastboard}
+                    setHideSide={setHideSide}
+                    fastboard={fastboard}
+                    joinedSharedDim={joinedSharedDim}
+                    setJoinedSharedDim={setJoinedSharedDim}
+                    setAskedForCounter={setAskedForCounter}
+                    counterFormData={counterFormData}
+                    counterSharedData={counterSharedData}
+                    dimensionFrames={dimensionFrames}
+                    iframeRef={iframeRef}
+                  />
+                </div>
+              </Col>
             )}
-          </Col>
-        </Row>
-      </Col>
-
-      {!screenSize.xl && (
-        <Col xs={24} xl={0}>
-          <div className="virtual-support-aside">
-            <MeetAsaider
-              isHost={isHost}
-              chatLoading={!chatRoomId}
-              messages={messages}
-              sendMessage={sendMessage}
-              participants={participants}
-              activeBtn={activeBtn}
-              setActiveBtn={setActiveBtn}
-              SystemMessage={SystemMessage}
-              shareWhiteboard={shareWhiteboard}
-              permissions={permissions}
-              sharedFiles={sharedFiles}
-              setSharedFiles={setSharedFiles}
-              sharedDimId={sharedDimId}
-              sharingDimId={sharingDimId}
-              unPublishScreen={unPublishScreen}
-              publishScreen={publishScreen}
-              sharingScreen={localScreenTrack?.enabled}
-              sharingDim={!!sharingDimId}
-              sharingFile={!!sharingFile}
-              sharingWhiteboard={!!fastboard}
-              joinedSharedDim={joinedSharedDim}
-              setJoinedSharedDim={setJoinedSharedDim}
-              fastboard={fastboard}
-              setAskedForCounter={setAskedForCounter}
-              counterFormData={counterFormData}
-              counterSharedData={counterSharedData}
-            />
-          </div>
+          </Row>
         </Col>
+
+        <Col
+          {...(hideSide
+            ? { flex: 1 }
+            : {
+                xs: 24,
+                md: 24,
+                xl: hideSide ? 22 : 16,
+                xxl: hideSide ? 22 : 16,
+              })}
+        >
+          <Row justify="center" gutter={[0, 20]} style={{ height: "100%" }}>
+            <Col
+              xs={24}
+              className="virtual-support-main"
+              style={{ padding: deskType === "desk" && "0px" }}
+            >
+              {deskType !== "desk" && (
+                <>
+                  <Row
+                    align="middle"
+                    justify="space-between"
+                    style={{
+                      marginBottom: "1rem",
+                      borderBottom: "1px solid #E5E5EAD9",
+                      padding: "24px 0",
+                    }}
+                  >
+                    <Typography.Text className="fz-18 fw-600">
+                      Vindo
+                    </Typography.Text>
+                    <Dropdown trigger={["click"]} overlay={inviteMenu}>
+                      <Row
+                        align="middle"
+                        className="clickable"
+                        gutter={[8, 0]}
+                        id="inviteParticipants"
+                      >
+                        <Col>
+                          <Row align="middle">
+                            <ParticipantsSVG
+                              style={{ width: "16px", height: "16px" }}
+                              color="#0129B7"
+                            />
+                          </Row>
+                        </Col>
+
+                        <Col>
+                          <Typography.Text className="fw-400 invite-gradiant-text">
+                            Invite Participant
+                          </Typography.Text>
+                        </Col>
+                      </Row>
+                    </Dropdown>
+                  </Row>
+
+                  <Row>
+                    {otherScreens.length > 4 ? (
+                      <Col xs={0} md={0} lg={24}>
+                        <CustomSlider responsive={slideResponsive}>
+                          {otherScreens.map((screen) => (
+                            <MeetingScreen
+                              key={screen.screenId}
+                              screen={screen}
+                              setMainScreen={setMainScreen}
+                              iframeRef={iframeRef}
+                              setIframeRef={setIframeRef}
+                              setCounterSharedData={setCounterSharedData}
+                            />
+                          ))}
+                        </CustomSlider>
+                      </Col>
+                    ) : (
+                      <Col xs={24} md={24} lg={24}>
+                        <div className="friend-screen-container">
+                          {otherScreens.map((screen) => (
+                            <MeetingScreen
+                              key={screen.screenId}
+                              screen={screen}
+                              setMainScreen={setMainScreen}
+                              iframeRef={iframeRef}
+                              setIframeRef={setIframeRef}
+                              setCounterSharedData={setCounterSharedData}
+                            />
+                          ))}
+                        </div>
+                      </Col>
+                    )}
+                  </Row>
+                </>
+              )}
+
+              {sharedDimId && joinedSharedDim ? (
+                <MeetingScreen
+                  isMain
+                  key={`${sharedDimId}_dim`}
+                  screen={sharedDimScreenObj}
+                  setMainScreen={setMainScreen}
+                  publishDim={publishDim}
+                  audioMuted={audioMuted}
+                  soundMuted={soundMuted}
+                  cameraEnabled={localVideoTrack?.enabled}
+                  toggleAudioMute={toggleAudioMute}
+                  toggleVideo={toggleVideo}
+                  toggleSoundMute={toggleSoundMute}
+                  publishScreen={publishScreen}
+                  unPublishScreen={unPublishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  SystemMessage={SystemMessage}
+                  unPublishDim={unPublishDim}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  isHost={isHost}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  sharedDimId={sharedDimId}
+                  permissions={permissions}
+                  setPermissions={setPermissions}
+                  setActiveBtn={setActiveBtn}
+                  activeBtn={activeBtn}
+                  askedForCounter={askedForCounter}
+                  setHideSide={setHideSide}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  shareWhiteboard={shareWhiteboard}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharingDimId={sharingDimId}
+                  fastboard={fastboard}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
+                  localScreenTrack={localScreenTrack}
+                  chatRoomId={chatRoomId}
+                  screenSize={screenSize}
+                  hideSide={hideSide}
+                  setDimensionFrames={setDimensionFrames}
+                  iframeRef={iframeRef}
+                  setIframeRef={setIframeRef}
+                  setCounterSharedData={setCounterSharedData}
+                />
+              ) : !!sharingDimId ? (
+                <MeetingScreen
+                  isMain
+                  key={`${sharingDimId}_dim`}
+                  screen={sharingDimScreenObj}
+                  setMainScreen={setMainScreen}
+                  publishDim={publishDim}
+                  audioMuted={audioMuted}
+                  soundMuted={soundMuted}
+                  cameraEnabled={localVideoTrack?.enabled}
+                  toggleAudioMute={toggleAudioMute}
+                  toggleVideo={toggleVideo}
+                  toggleSoundMute={toggleSoundMute}
+                  publishScreen={publishScreen}
+                  unPublishScreen={unPublishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  SystemMessage={SystemMessage}
+                  unPublishDim={unPublishDim}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  isHost={isHost}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  sharedDimId={sharedDimId}
+                  permissions={permissions}
+                  setPermissions={setPermissions}
+                  activeBtn={activeBtn}
+                  askedForCounter={askedForCounter}
+                  setHideSide={setHideSide}
+                  setActiveBtn={setActiveBtn}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  shareWhiteboard={shareWhiteboard}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharingDimId={sharingDimId}
+                  fastboard={fastboard}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
+                  localScreenTrack={localScreenTrack}
+                  chatRoomId={chatRoomId}
+                  screenSize={screenSize}
+                  hideSide={hideSide}
+                  setDimensionFrames={setDimensionFrames}
+                  iframeRef={iframeRef}
+                  setIframeRef={setIframeRef}
+                  setCounterSharedData={setCounterSharedData}
+                />
+              ) : !!sharingFile ? (
+                <MeetingScreen
+                  isMain
+                  key={`${sharingFile.id}_file`}
+                  screen={sharingFileScreenObj}
+                  setMainScreen={setMainScreen}
+                  publishDim={publishDim}
+                  audioMuted={audioMuted}
+                  soundMuted={soundMuted}
+                  cameraEnabled={localVideoTrack?.enabled}
+                  toggleAudioMute={toggleAudioMute}
+                  toggleVideo={toggleVideo}
+                  toggleSoundMute={toggleSoundMute}
+                  publishScreen={publishScreen}
+                  unPublishScreen={unPublishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  SystemMessage={SystemMessage}
+                  unPublishDim={unPublishDim}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  isHost={isHost}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  sharedDimId={sharedDimId}
+                  permissions={permissions}
+                  setPermissions={setPermissions}
+                  setActiveBtn={setActiveBtn}
+                  activeBtn={activeBtn}
+                  askedForCounter={askedForCounter}
+                  setHideSide={setHideSide}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  shareWhiteboard={shareWhiteboard}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharingDimId={sharingDimId}
+                  fastboard={fastboard}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
+                  localScreenTrack={localScreenTrack}
+                  chatRoomId={chatRoomId}
+                  screenSize={screenSize}
+                  hideSide={hideSide}
+                  setDimensionFrames={setDimensionFrames}
+                  iframeRef={iframeRef}
+                  setIframeRef={setIframeRef}
+                  setCounterSharedData={setCounterSharedData}
+                />
+              ) : !!fastboard ? (
+                <MeetingScreen
+                  isMain
+                  key={`${sharedDimId}_whiteboard`}
+                  screen={whiteboardScreenObj}
+                  setMainScreen={setMainScreen}
+                  publishDim={publishDim}
+                  audioMuted={audioMuted}
+                  soundMuted={soundMuted}
+                  cameraEnabled={localVideoTrack?.enabled}
+                  toggleAudioMute={toggleAudioMute}
+                  toggleVideo={toggleVideo}
+                  toggleSoundMute={toggleSoundMute}
+                  publishScreen={publishScreen}
+                  unPublishScreen={unPublishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  SystemMessage={SystemMessage}
+                  unPublishDim={unPublishDim}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  isHost={isHost}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  sharedDimId={sharedDimId}
+                  permissions={permissions}
+                  setPermissions={setPermissions}
+                  setActiveBtn={setActiveBtn}
+                  activeBtn={activeBtn}
+                  askedForCounter={askedForCounter}
+                  setHideSide={setHideSide}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  shareWhiteboard={shareWhiteboard}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharingDimId={sharingDimId}
+                  fastboard={fastboard}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
+                  localScreenTrack={localScreenTrack}
+                  chatRoomId={chatRoomId}
+                  screenSize={screenSize}
+                  hideSide={hideSide}
+                  setDimensionFrames={setDimensionFrames}
+                  iframeRef={iframeRef}
+                  setIframeRef={setIframeRef}
+                  setCounterSharedData={setCounterSharedData}
+                />
+              ) : deskType === "desk" ? (
+                <MeetingScreen
+                  isMain
+                  key={mainScreen?.screenId}
+                  screen={deskScreenObj}
+                  setMainScreen={setMainScreen}
+                  publishDim={publishDim}
+                  audioMuted={audioMuted}
+                  soundMuted={soundMuted}
+                  cameraEnabled={localVideoTrack?.enabled}
+                  toggleAudioMute={toggleAudioMute}
+                  toggleVideo={toggleVideo}
+                  toggleSoundMute={toggleSoundMute}
+                  publishScreen={publishScreen}
+                  unPublishScreen={unPublishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  SystemMessage={SystemMessage}
+                  unPublishDim={unPublishDim}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  isHost={isHost}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  sharedDimId={sharedDimId}
+                  permissions={permissions}
+                  setPermissions={setPermissions}
+                  setActiveBtn={setActiveBtn}
+                  activeBtn={activeBtn}
+                  askedForCounter={askedForCounter}
+                  setHideSide={setHideSide}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  shareWhiteboard={shareWhiteboard}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharingDimId={sharingDimId}
+                  fastboard={fastboard}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
+                  localScreenTrack={localScreenTrack}
+                  chatRoomId={chatRoomId}
+                  screenSize={screenSize}
+                  hideSide={hideSide}
+                  setDimensionFrames={setDimensionFrames}
+                  deskId={meetingId}
+                  iframeRef={iframeRef}
+                  setIframeRef={setIframeRef}
+                  setCounterSharedData={setCounterSharedData}
+                />
+              ) : (
+                <MeetingScreen
+                  isMain
+                  key={mainScreen?.screenId}
+                  screen={mainScreen}
+                  setMainScreen={setMainScreen}
+                  publishDim={publishDim}
+                  audioMuted={audioMuted}
+                  soundMuted={soundMuted}
+                  cameraEnabled={localVideoTrack?.enabled}
+                  toggleAudioMute={toggleAudioMute}
+                  toggleVideo={toggleVideo}
+                  toggleSoundMute={toggleSoundMute}
+                  publishScreen={publishScreen}
+                  unPublishScreen={unPublishScreen}
+                  sharingScreen={localScreenTrack?.enabled}
+                  SystemMessage={SystemMessage}
+                  unPublishDim={unPublishDim}
+                  sharingDim={!!sharingDimId}
+                  sharingFile={!!sharingFile}
+                  sharingWhiteboard={!!fastboard}
+                  isHost={isHost}
+                  joinedSharedDim={joinedSharedDim}
+                  setJoinedSharedDim={setJoinedSharedDim}
+                  sharedDimId={sharedDimId}
+                  permissions={permissions}
+                  setPermissions={setPermissions}
+                  setActiveBtn={setActiveBtn}
+                  activeBtn={activeBtn}
+                  askedForCounter={askedForCounter}
+                  setHideSide={setHideSide}
+                  messages={messages}
+                  sendMessage={sendMessage}
+                  participants={participants}
+                  shareWhiteboard={shareWhiteboard}
+                  sharedFiles={sharedFiles}
+                  setSharedFiles={setSharedFiles}
+                  sharingDimId={sharingDimId}
+                  fastboard={fastboard}
+                  setAskedForCounter={setAskedForCounter}
+                  counterFormData={counterFormData}
+                  counterSharedData={counterSharedData}
+                  localScreenTrack={localScreenTrack}
+                  chatRoomId={chatRoomId}
+                  screenSize={screenSize}
+                  hideSide={hideSide}
+                  setDimensionFrames={setDimensionFrames}
+                  iframeRef={iframeRef}
+                  setIframeRef={setIframeRef}
+                  setCounterSharedData={setCounterSharedData}
+                />
+              )}
+            </Col>
+          </Row>
+        </Col>
+
+        {!screenSize.xl && (
+          <Col xs={24} xl={0}>
+            <div className="virtual-support-aside">
+              <MeetAsaider
+                isHost={isHost}
+                chatLoading={!chatRoomId}
+                messages={messages}
+                sendMessage={sendMessage}
+                participants={participants}
+                activeBtn={activeBtn}
+                setActiveBtn={setActiveBtn}
+                SystemMessage={SystemMessage}
+                shareWhiteboard={shareWhiteboard}
+                permissions={permissions}
+                sharedFiles={sharedFiles}
+                setSharedFiles={setSharedFiles}
+                sharedDimId={sharedDimId}
+                sharingDimId={sharingDimId}
+                unPublishScreen={unPublishScreen}
+                publishScreen={publishScreen}
+                sharingScreen={localScreenTrack?.enabled}
+                sharingDim={!!sharingDimId}
+                sharingFile={!!sharingFile}
+                sharingWhiteboard={!!fastboard}
+                joinedSharedDim={joinedSharedDim}
+                setJoinedSharedDim={setJoinedSharedDim}
+                fastboard={fastboard}
+                setAskedForCounter={setAskedForCounter}
+                counterFormData={counterFormData}
+                counterSharedData={counterSharedData}
+                dimensionFrames={dimensionFrames}
+                iframeRef={iframeRef}
+              />
+            </div>
+          </Col>
+        )}
+      </Row>
+      {!!sharedHolomeetId && (
+        <HolomeetDim
+          SystemMessage={SystemMessage}
+          sharedHolomeetId={sharedHolomeetId}
+          isHost={isHost}
+        />
       )}
-    </Row>
+    </>
   );
 }

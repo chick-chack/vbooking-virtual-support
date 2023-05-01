@@ -1,0 +1,56 @@
+.full-screen-asider-navigate
+  .meet-navigate-side
+  .virtual-support-nav-sider-btns-wraper {
+  width: 100%;
+}
+
+.full-screen-asider-navigate .meet-navigate-side > .ant-row,
+.full-screen-asider-navigate
+  .meet-navigate-side
+  .virtual-support-nav-sider-btns {
+  flex-direction: column;
+  height: 100%;
+  gap: 40px !important;
+}
+
+.full-screen-asider-navigate
+  .meet-navigate-side
+  .virtual-support-nav-sider
+  .virtual-support-nav-sider-btns,
+.virtual-support
+  .virtual-support-nav-sider
+  .virtual-support-nav-sider-btns
+  > .ant-col {
+  width: 100%;
+}
+
+.full-screen-asider-navigate .meet-navigate-side .sider-active-btn::after {
+  content: "";
+  position: absolute;
+  right: -25px;
+  width: 3px;
+  height: 100%;
+  border-radius: 8px 0 0 8px;
+  background-color: #960bcd;
+}
+
+.virtual-support .sider-active-btn::after {
+  content: "";
+  position: absolute;
+  right: -16px;
+  width: 3px;
+  height: 100%;
+  border-radius: 8px 0 0 8px;
+  background-color: #960bcd;
+}
+
+.virtual-support .sider-active-btn svg path {
+  fill: #960bcd;
+}
+
+.meet-navigate-side .virtual-support-avatar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex: 1;
+}

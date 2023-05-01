@@ -1,18 +1,64 @@
-import { useState } from "react";
-import { Col, Row, Typography } from "antd";
+import { useState, useEffect } from "react";
+import { Col, Row, Tooltip, Typography } from "antd";
 
 import { ArrowRightSVG } from "assets/jsx-svg";
 
 import "./styles.css";
+import SocialEventService from "services/social-event.service";
+import { axiosCatch } from "utils/axiosUtils";
 
-export default function ProductionTools({ setActiveBtn }) {
+import videoImg from "assets/images/video.jpg";
+import { LoadingOutlined } from "@ant-design/icons";
+
+export default function ProductionTools({
+  activeBtn,
+  setActiveBtn,
+  dimensionFrames,
+  iframeRef,
+}) {
   const [dragedMedia, setDragedMedia] = useState(null);
+  const [mediaLibrary, setMediaLibrary] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const onDrop = (e, screenId) => {
     e.preventDefault();
     console.log("Draged Media", dragedMedia);
     console.log("Droped in Screen", screenId);
+
+    const newFrame = {
+      name: screenId,
+      texture: dragedMedia,
+    };
+    iframeRef?.contentWindow?.unityInstance?.SendMessage(
+      "BG_Scripts/JsBridge",
+      "SetFrameTexture",
+      JSON.stringify(newFrame),
+    );
   };
+
+  useEffect(() => {
+    if (iframeRef) {
+      iframeRef.contentWindow?.unityInstance?.SendMessage(
+        "BG_Scripts/JsBridge",
+        "GetFrames",
+      );
+    }
+  }, [activeBtn, iframeRef]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await SocialEventService.getMedia();
+        setMediaLibrary(res.data.data.rows);
+        console.log("++++", res.data.data.rows);
+      } catch (err) {
+        axiosCatch(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [setMediaLibrary]);
 
   return (
     <section className="production-tools">
@@ -41,70 +87,65 @@ export default function ProductionTools({ setActiveBtn }) {
       </Row>
 
       <Row gutter={[16, 0]} style={{ marginTop: "2rem" }}>
-        <Col xs={12} style={{ maxHeight: "78vh", overflowY: "scroll" }}>
+        <Col xs={12} style={{ maxHeight: "78vh", overflowY: "auto" }}>
           <Row gutter={[0, 12]}>
             <Col xs={24}>
               <Typography.Text className="fz-18">Screens</Typography.Text>
             </Col>
-            {screens.map((screen) => (
-              <Col key={screen.id} xs={24}>
+            {dimensionFrames?.map((screen) => (
+              <Col key={screen.name} xs={24}>
                 <div
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => onDrop(e, screen.id)}
+                  onDrop={(e) => onDrop(e, screen.name)}
                   className="production-tools-screen"
                   style={{
-                    borderColor: !dragedMedia && screen.color,
-                    background: dragedMedia && "#333",
+                    background: `url(${screen.texture || videoImg})`,
                   }}
-                >
-                  <Typography.Text className={dragedMedia && "wc"}>
+                />
+                <Tooltip title={screen.name}>
+                  <Typography.Text ellipsis className={dragedMedia && "wc"}>
                     {dragedMedia && "Drop on "}
-                    {screen.label}
+                    {screen.name}
                   </Typography.Text>
-                </div>
+                </Tooltip>
               </Col>
             ))}
           </Row>
         </Col>
 
-        <Col xs={12} style={{ maxHeight: "78vh", overflowY: "scroll" }}>
-          <Row gutter={[12, 12]}>
-            <Col xs={24}>
-              <Typography.Text className="fz-18">Media Library</Typography.Text>
-            </Col>
-            {mediaLibrary().map((media) => (
-              <Col key={media.id} xs={12}>
-                <div
-                  draggable
-                  className="production-tools-media"
-                  onDragStart={() => setDragedMedia(media.id)}
-                  onDragEnd={() => setDragedMedia(null)}
-                >
-                  <Typography.Text>{media.label}</Typography.Text>
-                </div>
+        <Col xs={12} style={{ maxHeight: "78vh", overflowY: "auto" }}>
+          {loading ? (
+            <Row justify="center">
+              <LoadingOutlined />
+            </Row>
+          ) : (
+            <Row gutter={[12, 12]}>
+              <Col xs={24}>
+                <Typography.Text className="fz-18">
+                  Media Library
+                </Typography.Text>
               </Col>
-            ))}
-          </Row>
+              {mediaLibrary?.map((media) => (
+                <Col key={media.id} xs={12}>
+                  <div
+                    draggable
+                    className="production-tools-media"
+                    style={{
+                      background: `url(${media.image || videoImg})`,
+                      backgroundColor: "#333",
+                    }}
+                    onDragStart={() => setDragedMedia(media.file)}
+                    onDragEnd={() => setDragedMedia(null)}
+                  />
+                  <Tooltip title={media.name}>
+                    <Typography.Text ellipsis>{media.name}</Typography.Text>
+                  </Tooltip>
+                </Col>
+              ))}
+            </Row>
+          )}
         </Col>
       </Row>
     </section>
   );
 }
-
-const screens = [
-  { id: 1, label: "Screen 1", color: "#f00" },
-  { id: 2, label: "Screen 2", color: "#0f0" },
-  { id: 3, label: "Screen 3", color: "#00f" },
-  { id: 4, label: "Screen 4", color: null },
-  { id: 5, label: "Screen 5", color: null },
-];
-
-const mediaLibrary = () => {
-  let media = [];
-
-  for (let index = 1; index < 30; index++) {
-    media.push({ id: index, label: `Media ${index}` });
-  }
-
-  return media;
-};

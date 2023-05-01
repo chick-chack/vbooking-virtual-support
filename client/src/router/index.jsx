@@ -81,6 +81,11 @@ export default function VverseRouter() {
               />
 
               <Route
+                path="/vindo-desk/:meetingId"
+                element={<VirtualSupportView />}
+              />
+
+              <Route
                 path="/hotel-details/:hotelId"
                 element={<HotelDetails />}
               />

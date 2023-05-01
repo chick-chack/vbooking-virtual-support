@@ -12,9 +12,9 @@ const getAgoraRteTokens = (channel, role, uid, expiry) => {
     .then((res) => res.data);
 };
 
-const getMeetingInfo = (meetingId) => {
+const getMeetingInfo = (meetingId, type) => {
   return axios
-    .get(`${SERVICE_BASE}/get-meeting-info/${meetingId}`)
+    .get(`${SERVICE_BASE}/get-meeting-info/${meetingId}?type=${type}`)
     .then((res) => res.data);
 };
 
@@ -48,6 +48,10 @@ const declineMeet = (meetingId) => {
   return axios.put(`${SERVICE_BASE}/declin/${meetingId}`);
 };
 
+const getMedia = () => {
+  return axios.get(`${SERVICE_BASE}/get-media`);
+};
+
 const SocialEventService = {
   getAgoraRteTokens,
   getMeetingInfo,
@@ -58,6 +62,7 @@ const SocialEventService = {
   getMyCalendar,
   confirmMeet,
   declineMeet,
+  getMedia,
 };
 
 export default SocialEventService;

@@ -13,7 +13,7 @@ import AuthService from "services/auth.service";
 const VirtualSupport = lazy(() => import("views/VirtualSupport"));
 const LoginView = lazy(() => import("views/Auth"));
 
-const notAuthURL = ["virtual-support"];
+const notAuthURL = ["virtual-support", "vindo-desk"];
 
 export default function NotAuthRouter() {
   const location = useLocation();
@@ -35,7 +35,10 @@ export default function NotAuthRouter() {
 
           setUser(user);
         }
-        if (location.pathname.split("/")[1] !== "virtual-support") {
+        if (
+          location.pathname.split("/")[1] !== "virtual-support" &&
+          location.pathname.split("/")[1] !== "vindo-desk"
+        ) {
           localStorage.removeItem("vverse-token");
           setUser(null);
         }
@@ -83,6 +86,8 @@ export default function NotAuthRouter() {
               path="/virtual-support/:meetingId"
               element={<VirtualSupport />}
             />
+
+            <Route path="/vindo-desk/:meetingId" element={<VirtualSupport />} />
           </Routes>
         </Content>
       </Layout>
