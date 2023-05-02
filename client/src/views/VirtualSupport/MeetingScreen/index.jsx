@@ -19,7 +19,6 @@ import MeetNavigateSide from "../MeetNavigateSide";
 
 import "./style.css";
 import MeetAsaider from "../MeetAsaider";
-import { useLocation } from "react-router-dom";
 
 const toAbsoluteUrl = (origin, pathname) =>
   origin + process.env.PUBLIC_URL + pathname;
@@ -99,9 +98,7 @@ export default function MeetingScreen({
   iframeRef,
   setIframeRef,
   setCounterSharedData,
-  setDeskType,
 }) {
-  const location = useLocation();
   const [unityCanvas, setUnityCanvas] = useState();
   const [whiteboardContainer, setWhiteboardContainer] = useState();
   const [controlSettingsShow, setControlSettingsShow] = useState(false);
@@ -506,8 +503,8 @@ export default function MeetingScreen({
   if (screen.type === "dim") {
     return (
       <section className={mainFullScreen ? "main-screen-full" : "main-screen"}>
-        {mainFullScreen ? (
-          <Row wrap={false} className="h-100">
+        <Row wrap={false} className="h-100">
+          {mainFullScreen && (
             <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
               <Row wrap={false} className="h-100">
                 <Col>
@@ -564,113 +561,61 @@ export default function MeetingScreen({
                 )}
               </Row>
             </Col>
-            <Col flex={1}>
-              <iframe
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                }}
-                title="Explore Metaverse"
-                ref={setIframeRef}
-              >
-                {iframeRef?.contentWindow?.document?.body &&
-                  createPortal(
-                    <>
-                      <div id="unity-container">
-                        <div id="canvas-wrap">
-                          <div id="rpm-container">
-                            <iframe
-                              title="rpm-frame"
-                              id="rpm-frame"
-                              className="rpm-frame"
-                              allow="camera *; microphone *"
-                            ></iframe>
-                            <button id="rpm-hide-button" onClick="hideRpm()">
-                              Hide
-                            </button>
-                          </div>
-                          <canvas
-                            ref={setUnityCanvas}
-                            id="unity-canvas"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                            }}
-                          ></canvas>
+          )}
+          <Col flex={1}>
+            <iframe
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+              title="Explore Metaverse"
+              ref={setIframeRef}
+            >
+              {iframeRef?.contentWindow?.document?.body &&
+                createPortal(
+                  <>
+                    <div id="unity-container">
+                      <div id="canvas-wrap">
+                        <div id="rpm-container">
+                          <iframe
+                            title="rpm-frame"
+                            id="rpm-frame"
+                            className="rpm-frame"
+                            allow="camera *; microphone *"
+                          ></iframe>
+                          <button id="rpm-hide-button" onClick="hideRpm()">
+                            Hide
+                          </button>
                         </div>
+                        <canvas
+                          ref={setUnityCanvas}
+                          id="unity-canvas"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        ></canvas>
                       </div>
-                      <canvas
-                        id="inMem_Canvas"
-                        height="450"
-                        width="450"
-                        style={{ display: "none" }}
-                      ></canvas>
-                      <canvas
-                        id="myCanvas"
-                        height="450"
-                        width="450"
-                        style={{ display: "none" }}
-                      ></canvas>
-                    </>,
-                    iframeRef?.contentWindow?.document?.body,
-                  )}
-              </iframe>
-            </Col>
-          </Row>
-        ) : (
-          <iframe
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-            title="Explore Metaverse"
-            ref={setIframeRef}
-          >
-            {iframeRef?.contentWindow?.document?.body &&
-              createPortal(
-                <>
-                  <div id="unity-container">
-                    <div id="canvas-wrap">
-                      <div id="rpm-container">
-                        <iframe
-                          title="rpm-frame"
-                          id="rpm-frame"
-                          className="rpm-frame"
-                          allow="camera *; microphone *"
-                        ></iframe>
-                        <button id="rpm-hide-button" onClick="hideRpm()">
-                          Hide
-                        </button>
-                      </div>
-                      <canvas
-                        ref={setUnityCanvas}
-                        id="unity-canvas"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                        }}
-                      ></canvas>
                     </div>
-                  </div>
-                  <canvas
-                    id="inMem_Canvas"
-                    height="450"
-                    width="450"
-                    style={{ display: "none" }}
-                  ></canvas>
-                  <canvas
-                    id="myCanvas"
-                    height="450"
-                    width="450"
-                    style={{ display: "none" }}
-                  ></canvas>
-                </>,
-                iframeRef?.contentWindow?.document?.body,
-              )}
-          </iframe>
-        )}
+                    <canvas
+                      id="inMem_Canvas"
+                      height="450"
+                      width="450"
+                      style={{ display: "none" }}
+                    ></canvas>
+                    <canvas
+                      id="myCanvas"
+                      height="450"
+                      width="450"
+                      style={{ display: "none" }}
+                    ></canvas>
+                  </>,
+                  iframeRef?.contentWindow?.document?.body,
+                )}
+            </iframe>
+          </Col>
+        </Row>
 
         {dragData.dragging && (
           <div
@@ -723,8 +668,8 @@ export default function MeetingScreen({
         className={mainFullScreen ? "main-screen-full" : "main-screen"}
         style={{ minHeight: "100%" }}
       >
-        {mainFullScreen ? (
-          <Row wrap={false} className="h-100">
+        <Row wrap={false} className="h-100">
+          {mainFullScreen && (
             <Col {...(hideSide ? null : { xs: 24, xl: hideSide ? 2 : 8 })}>
               <Row wrap={false} className="h-100">
                 <Col>
@@ -781,110 +726,69 @@ export default function MeetingScreen({
                 )}
               </Row>
             </Col>
-            <Col flex={1}>
-              <iframe
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                }}
-                title="Explore Desk"
-                ref={setIframeRef}
-              >
-                {iframeRef?.contentWindow?.document?.body &&
-                  createPortal(
-                    <>
-                      <div id="unity-container">
-                        <div id="canvas-wrap">
-                          <div id="rpm-container">
-                            <iframe
-                              title="desk"
-                              id="rpm-frame"
-                              class="rpm-frame"
-                              allow="camera *; microphone *"
-                            ></iframe>
-                            <button id="rpm-hide-button" onclick="hideRpm()">
-                              Hide
-                            </button>
-                          </div>
-                          <canvas
-                            id="unity-canvas"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                            }}
-                          ></canvas>
+          )}
+          <Col flex={1}>
+            <iframe
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+              title="Explore Desk"
+              ref={setIframeRef}
+            >
+              {iframeRef?.contentWindow?.document?.body &&
+                createPortal(
+                  <>
+                    <div id="unity-container">
+                      <div id="canvas-wrap">
+                        <div id="rpm-container">
+                          <iframe
+                            title="desk"
+                            id="rpm-frame"
+                            class="rpm-frame"
+                            allow="camera *; microphone *"
+                          ></iframe>
+                          <button id="rpm-hide-button" onclick="hideRpm()">
+                            Hide
+                          </button>
                         </div>
+                        <canvas
+                          id="unity-canvas"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        ></canvas>
                       </div>
-                      <canvas
-                        id="inMem_Canvas"
-                        height="450"
-                        width="450"
-                        style={{ display: "none" }}
-                      ></canvas>
-                      <canvas
-                        id="myCanvas"
-                        height="450"
-                        width="450"
-                        style={{ display: "none" }}
-                      ></canvas>
-                    </>,
-                    iframeRef?.contentWindow?.document?.body,
-                  )}
-              </iframe>
-            </Col>
-          </Row>
-        ) : (
-          <iframe
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-            title="Explore Desk"
-            ref={setIframeRef}
-          >
-            {iframeRef?.contentWindow?.document?.body &&
-              createPortal(
-                <>
-                  <div id="unity-container">
-                    <div id="canvas-wrap">
-                      <div id="rpm-container">
-                        <iframe
-                          title="desk"
-                          id="rpm-frame"
-                          class="rpm-frame"
-                          allow="camera *; microphone *"
-                        ></iframe>
-                        <button id="rpm-hide-button" onclick="hideRpm()">
-                          Hide
-                        </button>
-                      </div>
-                      <canvas
-                        id="unity-canvas"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                        }}
-                      ></canvas>
                     </div>
-                  </div>
-                  <canvas
-                    id="inMem_Canvas"
-                    height="450"
-                    width="450"
-                    style={{ display: "none" }}
-                  ></canvas>
-                  <canvas
-                    id="myCanvas"
-                    height="450"
-                    width="450"
-                    style={{ display: "none" }}
-                  ></canvas>
-                </>,
-                iframeRef?.contentWindow?.document?.body,
-              )}
-          </iframe>
+                    <canvas
+                      id="inMem_Canvas"
+                      height="450"
+                      width="450"
+                      style={{ display: "none" }}
+                    ></canvas>
+                    <canvas
+                      id="myCanvas"
+                      height="450"
+                      width="450"
+                      style={{ display: "none" }}
+                    ></canvas>
+                  </>,
+                  iframeRef?.contentWindow?.document?.body,
+                )}
+            </iframe>
+          </Col>
+        </Row>
+
+        {dragData.dragging && (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDrop}
+            className="dragover-overlay"
+          >
+            {dragData.dropText}
+          </div>
         )}
 
         <div
@@ -898,31 +802,20 @@ export default function MeetingScreen({
           />
         </div>
 
-        <div
-          className="whiteboard-close clickable"
-          onClick={() => {
-            const queryParams = new URLSearchParams(location.search);
-
-            if (queryParams.has("type")) {
-              queryParams.delete("type");
-
-              window.history.replaceState(
-                null,
-                null,
-                `${window.location.origin}${
-                  window.location.pathname
-                }?${queryParams.toString()}`,
-              );
-              setDeskType(null);
-            }
-          }}
-        >
-          <CloseSVG
-            color="#fff"
-            style={{ width: "12px", height: "12px" }}
-            className="close-whiteboard"
-          />
-        </div>
+        {isHost && (
+          <div
+            className="whiteboard-close clickable"
+            onClick={() => {
+              SystemMessage.stopDesk();
+            }}
+          >
+            <CloseSVG
+              color="#fff"
+              style={{ width: "12px", height: "12px" }}
+              className="close-whiteboard"
+            />
+          </div>
+        )}
 
         <div
           className={`main-screen-controls ${
