@@ -19,6 +19,7 @@ import MeetNavigateSide from "../MeetNavigateSide";
 
 import "./style.css";
 import MeetAsaider from "../MeetAsaider";
+import { useLocation } from "react-router-dom";
 
 const toAbsoluteUrl = (origin, pathname) =>
   origin + process.env.PUBLIC_URL + pathname;
@@ -98,7 +99,9 @@ export default function MeetingScreen({
   iframeRef,
   setIframeRef,
   setCounterSharedData,
+  setDeskType,
 }) {
+  const location = useLocation();
   const [unityCanvas, setUnityCanvas] = useState();
   const [whiteboardContainer, setWhiteboardContainer] = useState();
   const [controlSettingsShow, setControlSettingsShow] = useState(false);
@@ -285,7 +288,12 @@ export default function MeetingScreen({
   };
 
   useEffect(() => {
-    if (iframeRef && screen.dimensionId && user.cGAccessToken) {
+    if (
+      iframeRef &&
+      iframeRef.contentWindow &&
+      screen.dimensionId &&
+      user.cGAccessToken
+    ) {
       const configScript =
         iframeRef.contentWindow.document.createElement("script");
 
@@ -892,20 +900,31 @@ export default function MeetingScreen({
           />
         </div>
 
-        {/* <div
+        <div
           className="whiteboard-close clickable"
-          onClick={() =>
-            isHost
-              ? SystemMessage.stopDim()
-              : setJoinedSharedDim(!joinedSharedDim)
-          }
+          onClick={() => {
+            const queryParams = new URLSearchParams(location.search);
+
+            if (queryParams.has("type")) {
+              queryParams.delete("type");
+
+              window.history.replaceState(
+                null,
+                null,
+                `${window.location.origin}${
+                  window.location.pathname
+                }?${queryParams.toString()}`,
+              );
+              setDeskType(null);
+            }
+          }}
         >
           <CloseSVG
             color="#fff"
             style={{ width: "12px", height: "12px" }}
             className="close-whiteboard"
           />
-        </div> */}
+        </div>
 
         <div
           className={`main-screen-controls ${

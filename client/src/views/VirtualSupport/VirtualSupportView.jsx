@@ -613,6 +613,11 @@ export default function VirtualSupportView({
         sendMessage(formatSystemMsg(`ENDDIM%%%${meetingId}%%%${meetingId}`));
       },
 
+      stopDesk: () => {
+        setDeskType(null);
+        sendMessage(formatSystemMsg(`STOPDESK`));
+      },
+
       endMeeting: () =>
         sendMessage(formatSystemMsg(`ENDMEETING%%%${meetingId}`)),
 
@@ -994,6 +999,21 @@ export default function VirtualSupportView({
             });
           }
         } catch (ignored) {}
+      } else if (msg.includes("STOPDESK")) {
+        setDeskType(null);
+        const queryParams = new URLSearchParams(location.search);
+
+        if (queryParams.has("type")) {
+          queryParams.delete("type");
+          console.log("queryParams=====", queryParams.toString());
+          window.history.replaceState(
+            null,
+            null,
+            `${window.location.origin}${
+              window.location.pathname
+            }?${queryParams.toString()}`,
+          );
+        }
       } else if (msg.includes("SHAREDFILES")) {
         try {
           const files = JSON.parse(msg.split("%%%")[2]);
@@ -1411,9 +1431,6 @@ export default function VirtualSupportView({
 
             setMeeting(_meeting);
             initMeeting(_meeting);
-            if (searchParams.get("type") === "desk") {
-              setDeskType("desk");
-            }
           } else {
             navigate("/meetings");
           }
@@ -1423,6 +1440,7 @@ export default function VirtualSupportView({
         }
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     initMeeting,
     navigate,
@@ -1648,6 +1666,47 @@ export default function VirtualSupportView({
   useEffect(() => {
     participantsRef.current = participants;
   }, [participants]);
+
+  useEffect(() => {
+    if (
+      !!sharingDimId ||
+      joinedSharedDim ||
+      !!fastboard ||
+      sharingFile ||
+      localScreenTrack?.enabled
+    ) {
+      console.log("/////////////////////// test useEffect");
+      SystemMessage.stopDesk();
+      const queryParams = new URLSearchParams(location.search);
+
+      if (queryParams.has("type")) {
+        queryParams.delete("type");
+        console.log("queryParams=====", queryParams.toString());
+        window.history.replaceState(
+          null,
+          null,
+          `${window.location.origin}${
+            window.location.pathname
+          }?${queryParams.toString()}`,
+        );
+      }
+    } else {
+      if (searchParams.get("type") === "desk") {
+        setDeskType("desk");
+      } else {
+        setDeskType(null);
+      }
+    }
+  }, [
+    SystemMessage,
+    fastboard,
+    joinedSharedDim,
+    localScreenTrack?.enabled,
+    location.search,
+    searchParams,
+    sharingDimId,
+    sharingFile,
+  ]);
 
   if (!meetingId) {
     notification.error({ message: "Invalid meet link" });
@@ -1955,6 +2014,7 @@ export default function VirtualSupportView({
                   iframeRef={iframeRef}
                   setIframeRef={setIframeRef}
                   setCounterSharedData={setCounterSharedData}
+                  setDeskType={setDeskType}
                 />
               ) : !!sharingDimId ? (
                 <MeetingScreen
@@ -2006,6 +2066,7 @@ export default function VirtualSupportView({
                   iframeRef={iframeRef}
                   setIframeRef={setIframeRef}
                   setCounterSharedData={setCounterSharedData}
+                  setDeskType={setDeskType}
                 />
               ) : !!sharingFile ? (
                 <MeetingScreen
@@ -2057,6 +2118,7 @@ export default function VirtualSupportView({
                   iframeRef={iframeRef}
                   setIframeRef={setIframeRef}
                   setCounterSharedData={setCounterSharedData}
+                  setDeskType={setDeskType}
                 />
               ) : !!fastboard ? (
                 <MeetingScreen
@@ -2108,6 +2170,7 @@ export default function VirtualSupportView({
                   iframeRef={iframeRef}
                   setIframeRef={setIframeRef}
                   setCounterSharedData={setCounterSharedData}
+                  setDeskType={setDeskType}
                 />
               ) : deskType === "desk" ? (
                 <MeetingScreen
@@ -2160,6 +2223,7 @@ export default function VirtualSupportView({
                   iframeRef={iframeRef}
                   setIframeRef={setIframeRef}
                   setCounterSharedData={setCounterSharedData}
+                  setDeskType={setDeskType}
                 />
               ) : (
                 <MeetingScreen
@@ -2211,6 +2275,7 @@ export default function VirtualSupportView({
                   iframeRef={iframeRef}
                   setIframeRef={setIframeRef}
                   setCounterSharedData={setCounterSharedData}
+                  setDeskType={setDeskType}
                 />
               )}
             </Col>
