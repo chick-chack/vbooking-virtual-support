@@ -79,6 +79,7 @@ export default function VirtualSupportView({
   startCamActive,
 }) {
   const location = useLocation();
+
   const [meeting, setMeeting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeBtn, setActiveBtn] = useState("participant");
@@ -112,15 +113,16 @@ export default function VirtualSupportView({
   const [counterSharedData, setCounterSharedData] = useState({});
   const [sharedHolomeetId, setSharedHolomeetId] = useState(null);
   const [dimensionFrames, setDimensionFrames] = useState(null);
-  const [deskType, setDeskType] = useState("");
+  const [deskType, setDeskType] = useState(null);
   const [iframeRef, setIframeRef] = useState(null);
+
+  console.log("====================", deskType);
 
   const { user } = useContext(userContext);
   const joinTriesRef = useRef(1);
   const soundMutedRef = useRef();
   const { meetingId } = useParams();
-  const [searchParams] = useSearchParams();
-
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const userRef = useRef(user);
@@ -613,6 +615,11 @@ export default function VirtualSupportView({
         sendMessage(formatSystemMsg(`ENDDIM%%%${meetingId}%%%${meetingId}`));
       },
 
+      stopDesk: () => {
+        setDeskType(null);
+        sendMessage(formatSystemMsg(`STOPDESK`));
+      },
+
       endMeeting: () =>
         sendMessage(formatSystemMsg(`ENDMEETING%%%${meetingId}`)),
 
@@ -820,6 +827,16 @@ export default function VirtualSupportView({
               msg: formatSystemMsg("HOSTJOINED"),
             }),
           );
+          if (!searchParams.has("type")) {
+            await agoraChatClient.current.send(
+              AgoraChat.message.create({
+                chatType: "chatRoom",
+                type: "txt",
+                to: roomId,
+                msg: formatSystemMsg("STOPDESK"),
+              }),
+            );
+          }
         }
         setChatRoomId(roomId);
       } catch (error) {
@@ -994,6 +1011,21 @@ export default function VirtualSupportView({
             });
           }
         } catch (ignored) {}
+      } else if (msg.includes("STOPDESK")) {
+        setDeskType(null);
+
+        if (searchParams.get("type") === "desk") {
+          searchParams.delete("type");
+          setSearchParams(searchParams);
+          // console.log("queryParams=====", queryParams.toString());
+          // window.history.replaceState(
+          //   null,
+          //   null,
+          //   `${window.location.origin}${
+          //     window.location.pathname
+          //   }?${queryParams.toString()}`,
+          // );
+        }
       } else if (msg.includes("SHAREDFILES")) {
         try {
           const files = JSON.parse(msg.split("%%%")[2]);
@@ -1411,9 +1443,6 @@ export default function VirtualSupportView({
 
             setMeeting(_meeting);
             initMeeting(_meeting);
-            if (searchParams.get("type") === "desk") {
-              setDeskType("desk");
-            }
           } else {
             navigate("/meetings");
           }
@@ -1423,6 +1452,7 @@ export default function VirtualSupportView({
         }
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     initMeeting,
     navigate,
@@ -1648,6 +1678,40 @@ export default function VirtualSupportView({
   useEffect(() => {
     participantsRef.current = participants;
   }, [participants]);
+
+  useEffect(() => {
+    if (
+      !!sharingDimId ||
+      joinedSharedDim ||
+      !!fastboard ||
+      sharingFile ||
+      localScreenTrack?.enabled
+    ) {
+      console.log("/////////////////////// test useEffect");
+      SystemMessage.stopDesk();
+
+      if (searchParams.get("type") === "desk") {
+        searchParams.delete("type");
+        setSearchParams(searchParams);
+      }
+    } else {
+      if (searchParams.get("type") === "desk") {
+        setDeskType("desk");
+      } else {
+        setDeskType(null);
+      }
+    }
+  }, [
+    SystemMessage,
+    fastboard,
+    joinedSharedDim,
+    localScreenTrack?.enabled,
+    location.search,
+    searchParams,
+    setSearchParams,
+    sharingDimId,
+    sharingFile,
+  ]);
 
   if (!meetingId) {
     notification.error({ message: "Invalid meet link" });
