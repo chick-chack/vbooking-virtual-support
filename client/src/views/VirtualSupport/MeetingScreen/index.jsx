@@ -322,9 +322,9 @@ export default function MeetingScreen({
         "AgoraRTC_N.js",
         "AgoraWebSDK/libs/spatial-audio-main.js",
         "AgoraWebSDK/vendor/jquery.min.js",
-        "ReadyPlayerMeFrame.js",
+        "Build/visit-dimension.loader.js",
       ];
-
+      iframeRef.contentWindow.loadCounter = 0;
       listScript.forEach((ele) => {
         const scriptName =
           iframeRef.contentWindow.document.createElement("script");
@@ -333,6 +333,11 @@ export default function MeetingScreen({
           `/new-WebGL/${ele}`,
         );
         iframeRef.contentWindow.document.head.append(scriptName);
+        scriptName.onload = (e) => {
+          iframeRef.contentWindow.loadCounter++;
+          if (iframeRef.contentWindow.loadCounter === listScript.length)
+            setTimeout(iframeRef.contentWindow.loadUnity, 500);
+        };
       });
 
       configScript.innerHTML = `
@@ -433,17 +438,11 @@ export default function MeetingScreen({
             iframeRef.contentWindow.ethereum = window.ethereum;
           })
           .catch((message) => {
-            alert(message);
+            console.log("message", message);
           });
       };
 
-      const loaderScript =
-        iframeRef.contentWindow.document.createElement("script");
-      loaderScript.src =
-        toAbsoluteUrl(window.location.origin, "/new-WebGL/Build") +
-        "/visit-dimension.loader.js";
-
-      iframeRef.contentWindow.onload = () => {
+      iframeRef.contentWindow.loadUnity = () => {
         iframeRef.contentWindow.lat = 25.0418278;
         iframeRef.contentWindow.lon = 55.2513757;
 
@@ -451,9 +450,7 @@ export default function MeetingScreen({
       };
 
       iframeRef.contentWindow.document.body.append(div);
-      // iframeRef.contentWindow.document.body.append(hls);
       iframeRef.contentWindow.document.body.append(configScript);
-      iframeRef.contentWindow.document.head.append(loaderScript);
       iframeRef.contentWindow.document.body.append(style);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
