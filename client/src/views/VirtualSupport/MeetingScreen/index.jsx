@@ -330,6 +330,7 @@ export default function MeetingScreen({
         "AgoraRTC_N.js",
         "AgoraWebSDK/libs/spatial-audio-main.js",
         "AgoraWebSDK/vendor/jquery.min.js",
+        "ReadyPlayerMeFrame.js",
         "Build/visit-dimension.loader.js",
       ];
       iframeRef.contentWindow.loadCounter = 0;
